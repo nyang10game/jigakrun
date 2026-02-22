@@ -2,254 +2,335 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>지각런</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+:root{--acc:#ff2d55;--pur:#7c3aed;--neon:#00f5ff;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Noto Sans KR',sans-serif;user-select:none;-webkit-user-select:none;position:fixed;top:0;left:0;}
+#gameWrapper{position:fixed;top:0;left:0;width:100dvw;height:100dvh;overflow:hidden;background:#000;}
+canvas{display:block;width:100%;height:100%;border:none;outline:none;}
 
-:root {
-  --sky-morning: #b8cfe8;
-  --sky-dark: #1a0033;
-  --ground: #5a5a5a;
-  --ground-line: #4a9a4a;
-  --accent: #ff2d55;
-  --purple: #7c3aed;
-  --neon: #00f5ff;
-}
+/* SVG 레이어 */
+#svgLayer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+#playerWrap{position:absolute;transform-origin:center bottom;}
+.obsSVG{position:absolute;transform-origin:center bottom;}
+.puSVG{position:absolute;transform-origin:center center;}
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:none; }
-
-html, body {
-  width:100%; height:100%;
-  overflow:hidden;
-  background:#000;
-  font-family:'Noto Sans KR', sans-serif;
-  user-select:none; -webkit-user-select:none;
-  position:fixed;
-}
-
-#gameWrapper {
-  position:fixed;
-  top:0; left:0;
-  width:100%;
-  height:100%;
-  width:100dvw;
-  height:100dvh;
-  border:none; outline:none;
-  overflow:hidden;
-}
-
-canvas {
-  display:block;
-  width:100%; height:100%;
-  border:none; outline:none;
-}
-
-#ui {
-  position:absolute; top:0; left:0;
-  width:100%; height:100%;
-  pointer-events:none;
-}
+/* 캐릭터 애니 */
+@keyframes run-body{0%,100%{transform:translateY(0) rotate(6deg);}50%{transform:translateY(-8px) rotate(6deg);}}
+@keyframes run-body-fast{0%,100%{transform:translateY(0) rotate(8deg);}50%{transform:translateY(-11px) rotate(8deg);}}
+@keyframes awake-body{0%,100%{transform:translateY(0) rotate(8deg);filter:drop-shadow(0 0 12px #ff2d55) drop-shadow(0 0 25px #7c3aed);}50%{transform:translateY(-13px) rotate(8deg);filter:drop-shadow(0 0 22px #ff2d55) drop-shadow(0 0 45px #7c3aed);}}
+@keyframes leg-fwd{0%,100%{transform:rotate(-42deg);}50%{transform:rotate(48deg);}}
+@keyframes leg-back{0%,100%{transform:rotate(48deg);}50%{transform:rotate(-42deg);}}
+@keyframes arm-fwd{0%,100%{transform:rotate(-38deg);}50%{transform:rotate(36deg);}}
+@keyframes arm-back{0%,100%{transform:rotate(36deg);}50%{transform:rotate(-38deg);}}
+@keyframes bag-dangle{0%,100%{transform:rotate(-7deg) translateY(0);}50%{transform:rotate(-13deg) translateY(4px);}}
+@keyframes tie-flap{0%,100%{transform:rotate(-14deg);}50%{transform:rotate(14deg);}}
+@keyframes blink{0%,88%,100%{transform:scaleY(1);}93%{transform:scaleY(0.06);}}
+@keyframes sweat-drop{0%{opacity:0;transform:translateY(-3px);}20%{opacity:1;}80%{opacity:1;transform:translateY(10px);}100%{opacity:0;transform:translateY(14px);}}
+@keyframes hair-awake{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+@keyframes eye-fire{0%,100%{filter:drop-shadow(0 0 5px #ff0000);}50%{filter:drop-shadow(0 0 12px #ff4400);}}
+@keyframes aura-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes aura-spin-rev{from{transform:rotate(0deg);}to{transform:rotate(-360deg);}}
+@keyframes ptc-fly{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
+@keyframes lightning{0%,89%,100%{opacity:0;}91%,95%{opacity:1;}93%,97%{opacity:0;}}
+/* 장애물 애니 */
+@keyframes dog-run{0%,100%{transform:rotate(-3deg) translateY(0);}50%{transform:rotate(3deg) translateY(-5px);}}
+@keyframes dog-leg{0%,100%{transform:rotate(-35deg);}50%{transform:rotate(35deg);}}
+@keyframes delivery-wobble{0%,100%{transform:rotate(-2deg) translateY(0);}50%{transform:rotate(2deg) translateY(-4px);}}
+@keyframes box-shake{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+@keyframes moto-zoom{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+@keyframes cone-wave{0%,100%{transform:rotate(-1deg);}50%{transform:rotate(1deg);}}
+@keyframes energy-bob{0%,100%{transform:translateY(0) rotate(-5deg);}50%{transform:translateY(-8px) rotate(5deg);}}
+@keyframes energy-glow{0%,100%{filter:drop-shadow(0 0 6px #00f5ff);}50%{filter:drop-shadow(0 0 16px #00f5ff);}}
+@keyframes shield-bob{0%,100%{transform:translateY(0) rotate(3deg);}50%{transform:translateY(-8px) rotate(-3deg);}}
 
 /* HUD */
-#hud {
-  position:absolute; top:0; left:0; right:0;
-  display:flex; justify-content:space-between; align-items:flex-start;
-  padding:10px 14px;
-}
-
-#scoreBox {
-  background:rgba(0,0,0,0.6);
-  border-radius:10px; padding:6px 13px;
-  color:#fff; font-weight:700;
-  font-size:clamp(11px,2.8vw,16px); line-height:1.8;
-  border:1px solid rgba(255,255,255,0.15);
-  backdrop-filter:blur(8px);
-}
-
-#gaugeBox {
-  background:rgba(0,0,0,0.6);
-  border-radius:10px; padding:6px 13px;
-  color:#fff; font-weight:700; text-align:center;
-  font-size:clamp(10px,2.2vw,13px);
-  border:1px solid rgba(255,255,255,0.15);
-  backdrop-filter:blur(8px);
-  min-width:clamp(120px,22vw,180px);
-}
-
-#gaugeBar {
-  width:100%; height:10px;
-  background:rgba(255,255,255,0.15);
-  border-radius:5px; margin-top:4px; overflow:hidden;
-}
-
-#gaugeFill {
-  height:100%; width:0%;
-  background:linear-gradient(90deg,#7c3aed,#ff2d55);
-  border-radius:5px;
-  box-shadow:0 0 8px #ff2d55;
-  transition:width 0.1s;
-}
-
-#shieldHUD {
-  position:absolute; top:10px; right:14px;
-  background:rgba(0,180,255,0.25);
-  border:2px solid #00bfff; border-radius:8px;
-  padding:4px 10px; color:#00bfff;
-  font-size:clamp(11px,2.2vw,14px); font-weight:900;
-  display:none; backdrop-filter:blur(4px);
-}
-
-/* 각성 오버레이 */
-#awakeOverlay {
-  position:absolute; inset:0;
-  pointer-events:none; opacity:0;
-  transition:opacity 0.3s;
-  box-shadow:inset 0 0 100px rgba(124,58,237,0.85);
-}
-#awakeOverlay.on { opacity:1; animation:pulseAura 0.5s infinite alternate; }
-@keyframes pulseAura {
-  from { box-shadow:inset 0 0 100px rgba(124,58,237,0.85); }
-  to   { box-shadow:inset 0 0 150px rgba(255,45,85,0.9); }
-}
-
-#awakeText {
-  position:absolute; top:38%; left:50%;
-  transform:translate(-50%,-50%) scale(0);
-  color:#fff; font-weight:900; opacity:0;
-  font-size:clamp(20px,5.5vw,42px);
-  text-shadow:0 0 20px #ff2d55, 0 0 50px #7c3aed;
-  pointer-events:none; white-space:nowrap; z-index:10;
-}
-#awakeText.pop { animation:popIn 0.6s forwards; }
-@keyframes popIn {
-  0%   { transform:translate(-50%,-50%) scale(0); opacity:0; }
-  55%  { transform:translate(-50%,-50%) scale(1.25); opacity:1; }
-  75%  { transform:translate(-50%,-50%) scale(0.92); opacity:1; }
-  100% { transform:translate(-50%,-50%) scale(1); opacity:1; }
-}
-
-#awakeBar {
-  position:absolute; bottom:0; left:0;
-  height:5px; width:100%;
-  background:linear-gradient(90deg,#7c3aed,#ff2d55);
-  transform-origin:left; display:none;
-}
-
-/* 튜토리얼 힌트 */
-#hint {
-  position:absolute; bottom:clamp(55px,13vh,85px); left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.75); border:2px solid rgba(255,255,255,0.3);
-  border-radius:50px; padding:10px 26px;
-  color:#fff; font-size:clamp(13px,3vw,18px); font-weight:700;
-  pointer-events:none; white-space:nowrap; display:none;
-  animation:blink 0.85s infinite alternate;
-}
-@keyframes blink { from{opacity:1} to{opacity:0.2} }
-
-/* 시작/게임오버 화면 */
-#startScreen, #gameOverScreen {
-  position:absolute; inset:0;
-  display:flex; flex-direction:column;
-  justify-content:center; align-items:center;
-  background:rgba(0,0,0,0.82); color:#fff;
-  backdrop-filter:blur(10px); pointer-events:all;
-}
-
-#startScreen h1 {
-  font-size:clamp(40px,10vw,72px); font-weight:900;
-  background:linear-gradient(135deg,#fff 0%,#ff2d55 45%,#7c3aed 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  letter-spacing:-2px; margin-bottom:4px;
-}
-#startScreen .sub {
-  font-size:clamp(11px,2.5vw,15px);
-  color:rgba(255,255,255,0.5); margin-bottom:18px;
-}
-
-#controlGuide {
-  display:flex; gap:10px; margin-bottom:22px;
-}
-.ctrl {
-  background:rgba(255,255,255,0.07);
-  border:1px solid rgba(255,255,255,0.18);
-  border-radius:12px; padding:10px 14px; text-align:center;
-  min-width:clamp(75px,14vw,110px);
-}
-.ctrl .icon { font-size:clamp(18px,4vw,26px); margin-bottom:3px; }
-.ctrl .label { font-size:clamp(10px,1.8vw,12px); color:rgba(255,255,255,0.55); }
-
-.btn {
-  background:linear-gradient(135deg,#7c3aed,#ff2d55);
-  border:none; border-radius:50px; color:#fff;
-  font-size:clamp(15px,3.5vw,22px); font-weight:900;
-  font-family:'Noto Sans KR',sans-serif;
-  padding:clamp(12px,2.5vw,18px) clamp(32px,8vw,60px);
-  cursor:pointer; min-height:52px;
-  box-shadow:0 4px 28px rgba(124,58,237,0.55);
-  pointer-events:all; transition:transform 0.1s;
-}
-.btn:active { transform:scale(0.95); }
-
-#gameOverScreen h2 {
-  font-size:clamp(28px,7vw,50px); font-weight:900;
-  color:#ff2d55; margin-bottom:8px;
-  text-shadow:0 0 24px rgba(255,45,85,0.7);
-}
-#gameOverScreen .stats {
-  font-size:clamp(12px,2.5vw,16px);
-  color:rgba(255,255,255,0.65);
-  margin-bottom:22px; text-align:center; line-height:2.2;
-}
-#gameOverScreen .stats span { color:#fff; font-weight:700; }
-
-/* 세로모드 */
-#rotateMsg {
-  display:none; position:fixed; inset:0;
-  background:#0d0d1a; color:#fff;
-  flex-direction:column; justify-content:center; align-items:center;
-  font-size:clamp(15px,4vw,20px); font-weight:700; gap:16px; z-index:999;
-}
-#rotateMsg .rIcon { font-size:clamp(40px,10vw,60px); animation:rot 1.2s infinite alternate; }
-@keyframes rot { from{transform:rotate(0deg)} to{transform:rotate(90deg)} }
-
-@media (orientation:portrait) {
-  #rotateMsg { display:flex; }
-  #gameWrapper { display:none; }
-}
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;pointer-events:none;}
+#scoreBox{background:rgba(0,0,0,0.65);border-radius:10px;padding:6px 13px;color:#fff;font-weight:700;font-size:clamp(11px,2.8vw,16px);line-height:1.8;border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(8px);}
+#gaugeBox{background:rgba(0,0,0,0.65);border-radius:10px;padding:6px 13px;color:#fff;font-weight:700;text-align:center;font-size:clamp(10px,2.2vw,13px);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(8px);min-width:clamp(120px,22vw,180px);}
+#gaugeBar{width:100%;height:10px;background:rgba(255,255,255,0.12);border-radius:5px;margin-top:4px;overflow:hidden;}
+#gaugeFill{height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#ff2d55);border-radius:5px;box-shadow:0 0 8px #ff2d55;transition:width 0.1s;}
+#shieldHUD{position:absolute;top:10px;right:14px;background:rgba(0,180,255,0.2);border:2px solid #00bfff;border-radius:8px;padding:4px 10px;color:#00bfff;font-size:clamp(11px,2.2vw,14px);font-weight:900;display:none;backdrop-filter:blur(4px);}
+#awakeOverlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 0.3s;box-shadow:inset 0 0 120px rgba(124,58,237,0.8);}
+#awakeOverlay.on{opacity:1;animation:pulseAura 0.5s infinite alternate;}
+@keyframes pulseAura{from{box-shadow:inset 0 0 100px rgba(124,58,237,0.8);}to{box-shadow:inset 0 0 160px rgba(255,45,85,0.9);}}
+#awakeText{position:absolute;top:36%;left:50%;transform:translate(-50%,-50%) scale(0);color:#fff;font-weight:900;opacity:0;font-size:clamp(20px,5.5vw,42px);text-shadow:0 0 20px #ff2d55,0 0 50px #7c3aed;pointer-events:none;white-space:nowrap;z-index:10;}
+#awakeText.pop{animation:popIn 0.6s forwards;}
+@keyframes popIn{0%{transform:translate(-50%,-50%) scale(0);opacity:0;}55%{transform:translate(-50%,-50%) scale(1.25);opacity:1;}75%{transform:translate(-50%,-50%) scale(0.92);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+#awakeBar{position:absolute;bottom:0;left:0;height:5px;background:linear-gradient(90deg,#7c3aed,#ff2d55);transform-origin:left;display:none;}
+#hint{position:absolute;bottom:clamp(55px,13vh,85px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);border:2px solid rgba(255,255,255,0.3);border-radius:50px;padding:10px 26px;color:#fff;font-size:clamp(13px,3vw,18px);font-weight:700;pointer-events:none;white-space:nowrap;display:none;animation:blink2 0.85s infinite alternate;}
+@keyframes blink2{from{opacity:1}to{opacity:0.2}}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+#startScreen,#gameOverScreen{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(0,0,0,0.85);color:#fff;backdrop-filter:blur(12px);pointer-events:all;}
+#startScreen h1{font-size:clamp(42px,10vw,76px);font-weight:900;background:linear-gradient(135deg,#fff 0%,#ff2d55 45%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-2px;margin-bottom:4px;}
+#startScreen .sub{font-size:clamp(11px,2.5vw,15px);color:rgba(255,255,255,0.45);margin-bottom:18px;}
+#controlGuide{display:flex;gap:10px;margin-bottom:22px;}
+.ctrl{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:10px 14px;text-align:center;min-width:clamp(75px,14vw,110px);}
+.ctrl .icon{font-size:clamp(18px,4vw,26px);margin-bottom:3px;}
+.ctrl .label{font-size:clamp(10px,1.8vw,12px);color:rgba(255,255,255,0.5);}
+.btn{background:linear-gradient(135deg,#7c3aed,#ff2d55);border:none;border-radius:50px;color:#fff;font-size:clamp(15px,3.5vw,22px);font-weight:900;font-family:'Noto Sans KR',sans-serif;padding:clamp(12px,2.5vw,18px) clamp(32px,8vw,60px);cursor:pointer;min-height:52px;box-shadow:0 4px 28px rgba(124,58,237,0.55);pointer-events:all;transition:transform 0.1s;}
+.btn:active{transform:scale(0.95);}
+#gameOverScreen h2{font-size:clamp(28px,7vw,50px);font-weight:900;color:#ff2d55;margin-bottom:8px;text-shadow:0 0 24px rgba(255,45,85,0.7);}
+#gameOverScreen .stats{font-size:clamp(12px,2.5vw,16px);color:rgba(255,255,255,0.6);margin-bottom:22px;text-align:center;line-height:2.4;}
+#gameOverScreen .stats span{color:#fff;font-weight:700;}
+#rotateMsg{display:none;position:fixed;inset:0;background:#0d0d1a;color:#fff;flex-direction:column;justify-content:center;align-items:center;font-size:clamp(15px,4vw,20px);font-weight:700;gap:16px;z-index:999;}
+#rotateMsg .rIcon{font-size:clamp(40px,10vw,60px);animation:rot 1.2s infinite alternate;}
+@keyframes rot{from{transform:rotate(0deg)}to{transform:rotate(90deg)}}
+@media(orientation:portrait){#rotateMsg{display:flex;}#gameWrapper{display:none;}}
 </style>
 </head>
 <body>
 
-<div id="rotateMsg">
-  <div class="rIcon">📱</div>
-  <div>핸드폰을 가로로 돌려주세요!</div>
-</div>
+<div id="rotateMsg"><div class="rIcon">📱</div><div>핸드폰을 가로로 돌려주세요!</div></div>
 
 <div id="gameWrapper">
   <canvas id="gc"></canvas>
+
+  <!-- ══ SVG 캐릭터 레이어 ══ -->
+  <div id="svgLayer">
+
+    <!-- ── 주인공 SVG ── -->
+    <div id="playerWrap">
+      <svg id="playerSVG" viewBox="-20 -10 160 230" overflow="visible"
+           style="width:auto;height:100%;display:block;">
+
+        <!-- 각성 오라 (평소엔 숨김) -->
+        <g id="auraLayer" opacity="0">
+          <g style="animation:aura-spin 2.5s linear infinite;transform-origin:60px 140px;">
+            <ellipse cx="60" cy="140" rx="90" ry="90" fill="none" stroke="rgba(124,58,237,0.4)" stroke-width="2.5" stroke-dasharray="10,7"/>
+            <ellipse cx="60" cy="140" rx="70" ry="70" fill="none" stroke="rgba(255,45,85,0.3)" stroke-width="1.5" stroke-dasharray="6,10"/>
+          </g>
+          <g style="animation:aura-spin-rev 1.8s linear infinite;transform-origin:60px 140px;">
+            <ellipse cx="60" cy="140" rx="55" ry="55" fill="none" stroke="rgba(255,45,85,0.5)" stroke-width="2" stroke-dasharray="8,5"/>
+          </g>
+          <!-- 파티클 -->
+          <circle cx="60" cy="80" r="3.5" fill="#ff2d55" style="animation:ptc-fly 1.4s ease-out infinite;--tx:-40px;--ty:-50px;"/>
+          <circle cx="60" cy="80" r="2.5" fill="#7c3aed" style="animation:ptc-fly 1.4s ease-out infinite;animation-delay:0.35s;--tx:48px;--ty:-42px;"/>
+          <circle cx="60" cy="80" r="4" fill="#ff2d55" style="animation:ptc-fly 1.4s ease-out infinite;animation-delay:0.7s;--tx:-32px;--ty:-62px;"/>
+          <circle cx="60" cy="80" r="2" fill="#00f5ff" style="animation:ptc-fly 1.4s ease-out infinite;animation-delay:1.05s;--tx:38px;--ty:-55px;"/>
+          <!-- 번개 -->
+          <path d="M10,50 L22,85 L14,85 L30,125" stroke="#ffff00" stroke-width="2.5" fill="none" stroke-linecap="round" style="animation:lightning 2.2s infinite;" opacity="0"/>
+          <path d="M110,45 L100,80 L108,80 L92,118" stroke="#ff2d55" stroke-width="2" fill="none" stroke-linecap="round" style="animation:lightning 2.2s infinite;animation-delay:0.8s;" opacity="0"/>
+          <!-- 바닥 마법진 -->
+          <g style="animation:aura-spin 3s linear infinite;transform-origin:60px 208px;">
+            <ellipse cx="60" cy="208" rx="68" ry="18" fill="none" stroke="rgba(124,58,237,0.55)" stroke-width="2" stroke-dasharray="9,6"/>
+            <ellipse cx="60" cy="208" rx="48" ry="12" fill="none" stroke="rgba(255,45,85,0.4)" stroke-width="1.5"/>
+            <ellipse cx="60" cy="208" rx="28" ry="7" fill="rgba(124,58,237,0.15)"/>
+          </g>
+        </g>
+
+        <!-- ── 캐릭터 바디 (애니 wrapper) ── -->
+        <g id="charBody" style="animation:run-body 0.42s ease-in-out infinite;transform-origin:60px 208px;">
+
+          <!-- 속도선 -->
+          <g id="speedLines">
+            <line x1="-20" y1="68" x2="-5" y2="68" stroke="rgba(255,255,255,0.22)" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="-25" y1="82" x2="-7" y2="82" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="-18" y1="96" x2="-5" y2="96" stroke="rgba(255,255,255,0.10)" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- 가방 -->
+          <g style="animation:bag-dangle 0.42s ease-in-out infinite;transform-origin:82px 95px;">
+            <rect x="83" y="80" width="36" height="46" rx="7" fill="#5d4037"/>
+            <path d="M83,86 Q73,74 77,62" stroke="#795548" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <rect x="87" y="97" width="28" height="20" rx="4" fill="#6d4c41"/>
+            <line x1="89" y1="106" x2="113" y2="106" stroke="#a1887f" stroke-width="1.5"/>
+            <circle cx="113" cy="106" r="2.2" fill="#bcaaa4"/>
+            <circle cx="101" cy="80" r="5" fill="none" stroke="#a1887f" stroke-width="2"/>
+            <text x="101" y="84" text-anchor="middle" font-size="6" fill="#a1887f">★</text>
+            <rect x="84" y="81" width="34" height="44" rx="6" fill="none" stroke="#6d4c41" stroke-width="1.5" stroke-dasharray="4,3"/>
+          </g>
+
+          <!-- 오른 다리 (뒤) -->
+          <g style="animation:leg-back 0.42s ease-in-out infinite;transform-origin:68px 148px;">
+            <rect x="57" y="148" width="23" height="50" rx="8" fill="#162055"/>
+            <rect x="57" y="188" width="23" height="7" rx="3" fill="#eee"/>
+            <ellipse cx="68" cy="202" rx="19" ry="9" fill="#1a1a1a"/>
+            <ellipse cx="63" cy="199" rx="11" ry="6" fill="#2a2a2a"/>
+            <rect x="52" y="200" width="19" height="2.5" rx="1.2" fill="rgba(255,255,255,0.4)"/>
+          </g>
+
+          <!-- 왼 다리 (앞) -->
+          <g style="animation:leg-fwd 0.42s ease-in-out infinite;transform-origin:47px 148px;">
+            <rect x="35" y="148" width="23" height="50" rx="8" fill="#1a2580"/>
+            <rect x="35" y="188" width="23" height="7" rx="3" fill="#eee"/>
+            <ellipse cx="46" cy="202" rx="19" ry="9" fill="#1a1a1a"/>
+            <ellipse cx="41" cy="199" rx="11" ry="6" fill="#2a2a2a"/>
+            <rect x="30" y="200" width="19" height="2.5" rx="1.2" fill="rgba(255,255,255,0.4)"/>
+          </g>
+
+          <!-- 몸통 교복 -->
+          <rect x="27" y="90" width="66" height="62" rx="10" fill="#eeeef8"/>
+          <rect x="27" y="90" width="23" height="62" rx="0" fill="#1a237e"/>
+          <rect x="27" y="90" width="23" height="10" rx="8" fill="#1a237e"/>
+          <rect x="70" y="90" width="23" height="62" rx="0" fill="#1a237e"/>
+          <rect x="70" y="90" width="23" height="10" rx="8" fill="#1a237e"/>
+          <rect x="27" y="128" width="66" height="24" fill="#1a237e"/>
+          <polygon points="50,90 60,104 50,112" fill="#162055"/>
+          <polygon points="70,90 60,104 70,112" fill="#162055"/>
+          <circle cx="68" cy="102" r="2.8" fill="rgba(255,255,255,0.4)"/>
+          <circle cx="68" cy="116" r="2.8" fill="rgba(255,255,255,0.4)"/>
+          <circle cx="68" cy="130" r="2.8" fill="rgba(255,255,255,0.4)"/>
+          <rect x="29" y="94" width="16" height="12" rx="2" fill="rgba(0,0,0,0.12)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <path d="M31,94 L37,90 L43,94" fill="rgba(255,100,100,0.6)"/>
+
+          <!-- 각성 에너지 균열 (평소 숨김) -->
+          <g id="crackLines" opacity="0">
+            <path d="M33,102 L44,114 L36,120 L50,134" stroke="rgba(200,0,255,0.7)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M78,97 L70,110 L80,118" stroke="rgba(255,45,85,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- 넥타이 -->
+          <g style="animation:tie-flap 0.42s ease-in-out infinite;transform-origin:58px 94px;">
+            <ellipse cx="58" cy="94" rx="6.5" ry="5.5" fill="#c62828"/>
+            <polygon points="52,97 64,97 62,134 54,134" fill="#e53935"/>
+            <polygon points="52,97 64,97 58,105" fill="#c62828"/>
+            <line x1="54" y1="108" x2="63" y2="106" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+            <line x1="54" y1="119" x2="63" y2="117" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+            <!-- 각성 넥타이 불꽃 (숨김) -->
+            <g id="tieFire" opacity="0">
+              <path d="M54,134 Q50,144 58,150 Q66,144 62,134Z" fill="rgba(255,100,0,0.8)"/>
+              <path d="M55,126 Q52,134 58,139 Q64,134 61,126Z" fill="rgba(255,50,0,0.6)"/>
+            </g>
+          </g>
+
+          <!-- 오른팔 -->
+          <g style="animation:arm-back 0.42s ease-in-out infinite;transform-origin:84px 98px;">
+            <rect x="77" y="98" width="20" height="40" rx="8" fill="#162055"/>
+            <rect x="77" y="132" width="20" height="5" rx="2" fill="#eee"/>
+            <ellipse cx="87" cy="142" rx="11" ry="9" fill="#f5c5a0"/>
+            <ellipse cx="80" cy="139" rx="5" ry="4" fill="#f0b890"/>
+            <ellipse cx="94" cy="139" rx="5" ry="4" fill="#f0b890"/>
+            <ellipse cx="87" cy="135" rx="5" ry="3.5" fill="#f0b890"/>
+          </g>
+
+          <!-- 왼팔 -->
+          <g style="animation:arm-fwd 0.42s ease-in-out infinite;transform-origin:32px 98px;">
+            <rect x="20" y="98" width="20" height="40" rx="8" fill="#1a237e"/>
+            <rect x="20" y="132" width="20" height="5" rx="2" fill="#eee"/>
+            <ellipse cx="30" cy="142" rx="11" ry="9" fill="#f5c5a0"/>
+            <ellipse cx="23" cy="139" rx="5" ry="4" fill="#f0b890"/>
+            <ellipse cx="37" cy="139" rx="5" ry="4" fill="#f0b890"/>
+            <ellipse cx="30" cy="135" rx="5" ry="3.5" fill="#f0b890"/>
+          </g>
+
+          <!-- 목 -->
+          <rect x="48" y="72" width="24" height="22" rx="6" fill="#f0b890"/>
+          <line x1="55" y1="74" x2="55" y2="90" stroke="rgba(180,100,60,0.18)" stroke-width="1.5"/>
+          <line x1="65" y1="74" x2="65" y2="90" stroke="rgba(180,100,60,0.18)" stroke-width="1.5"/>
+
+          <!-- 머리카락 뒤 -->
+          <g id="hairBack">
+            <ellipse cx="60" cy="38" rx="34" ry="34" fill="#18100a"/>
+            <path d="M28,30 Q18,8 28,0 Q34,14 38,22Z" fill="#18100a"/>
+            <path d="M42,18 Q38,-4 50,-6 Q50,10 52,18Z" fill="#18100a"/>
+            <path d="M60,12 Q58,-8 68,-9 Q66,7 65,14Z" fill="#18100a"/>
+            <path d="M75,18 Q80,-4 88,1 Q82,14 78,22Z" fill="#18100a"/>
+            <path d="M86,30 Q96,10 103,17 Q93,27 88,34Z" fill="#18100a"/>
+          </g>
+
+          <!-- 얼굴 -->
+          <ellipse id="faceBase" cx="60" cy="44" rx="30" ry="34" fill="#f5c5a0"/>
+          <ellipse cx="30" cy="46" rx="6" ry="9" fill="#f0b080"/>
+          <ellipse cx="30" cy="46" rx="3" ry="5" fill="#e8a070"/>
+          <ellipse cx="90" cy="46" rx="6" ry="9" fill="#f0b080"/>
+          <ellipse cx="90" cy="46" rx="3" ry="5" fill="#e8a070"/>
+
+          <!-- 앞머리 -->
+          <path d="M30,30 Q36,14 46,20 Q44,30 40,37Z" fill="#18100a"/>
+          <path d="M46,20 Q52,4 60,13 Q56,24 52,31Z" fill="#18100a"/>
+          <path d="M66,13 Q74,2 82,15 Q74,23 70,31Z" fill="#18100a"/>
+          <path d="M26,37 Q15,26 20,15" stroke="#18100a" stroke-width="10" fill="none" stroke-linecap="round"/>
+
+          <!-- 눈썹 (인상) -->
+          <path d="M33,32 Q43,24 55,30" stroke="#18100a" stroke-width="4.8" fill="none" stroke-linecap="round"/>
+          <path d="M65,30 Q75,24 87,32" stroke="#18100a" stroke-width="4.8" fill="none" stroke-linecap="round"/>
+          <path d="M55,30 Q59,26 65,30" stroke="#18100a" stroke-width="2.2" fill="none"/>
+          <line x1="56" y1="28" x2="58" y2="35" stroke="#c8905a" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="63" y1="28" x2="61" y2="35" stroke="#c8905a" stroke-width="1.8" stroke-linecap="round"/>
+
+          <!-- 눈 (일반) -->
+          <g id="eyeNormal">
+            <g style="animation:blink 4s ease-in-out infinite;transform-origin:44px 43px;">
+              <ellipse cx="44" cy="43" rx="12" ry="13" fill="white"/>
+              <ellipse cx="44" cy="44" rx="8.5" ry="9.5" fill="#3d2010"/>
+              <ellipse cx="44" cy="44" rx="5" ry="6" fill="#0d0808"/>
+              <ellipse cx="39" cy="39" rx="3.5" ry="4" fill="white"/>
+              <ellipse cx="49" cy="47" rx="2" ry="2" fill="rgba(255,255,255,0.65)"/>
+              <path d="M32,37 Q44,29 56,37" stroke="#18100a" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+              <path d="M34,51 Q44,55 54,51" stroke="#18100a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </g>
+            <g style="animation:blink 4s ease-in-out infinite;transform-origin:76px 43px;animation-delay:0.15s;">
+              <ellipse cx="76" cy="43" rx="12" ry="13" fill="white"/>
+              <ellipse cx="76" cy="44" rx="8.5" ry="9.5" fill="#3d2010"/>
+              <ellipse cx="76" cy="44" rx="5" ry="6" fill="#0d0808"/>
+              <ellipse cx="71" cy="39" rx="3.5" ry="4" fill="white"/>
+              <ellipse cx="81" cy="47" rx="2" ry="2" fill="rgba(255,255,255,0.65)"/>
+              <path d="M64,37 Q76,29 88,37" stroke="#18100a" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+              <path d="M66,51 Q76,55 86,51" stroke="#18100a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </g>
+          </g>
+
+          <!-- 눈 (각성, 숨김) -->
+          <g id="eyeAwake" display="none">
+            <ellipse cx="44" cy="43" rx="13" ry="14" fill="#ff3355"/>
+            <ellipse cx="44" cy="43" rx="9" ry="10" fill="#ff0022" style="animation:eye-fire 0.8s ease-in-out infinite;"/>
+            <ellipse cx="44" cy="43" rx="5.5" ry="6.5" fill="#880000"/>
+            <ellipse cx="44" cy="43" rx="2.5" ry="3" fill="#1a0000"/>
+            <ellipse cx="39" cy="38" rx="3" ry="3.5" fill="rgba(255,200,200,0.85)"/>
+            <ellipse cx="44" cy="43" rx="14" ry="15" fill="none" stroke="rgba(255,45,85,0.6)" stroke-width="2.5"/>
+            <path d="M31,36 Q44,27 57,36" stroke="#0a0010" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+            <ellipse cx="76" cy="43" rx="13" ry="14" fill="#ff3355"/>
+            <ellipse cx="76" cy="43" rx="9" ry="10" fill="#ff0022" style="animation:eye-fire 0.8s ease-in-out infinite;animation-delay:0.1s;"/>
+            <ellipse cx="76" cy="43" rx="5.5" ry="6.5" fill="#880000"/>
+            <ellipse cx="76" cy="43" rx="2.5" ry="3" fill="#1a0000"/>
+            <ellipse cx="71" cy="38" rx="3" ry="3.5" fill="rgba(255,200,200,0.85)"/>
+            <ellipse cx="76" cy="43" rx="14" ry="15" fill="none" stroke="rgba(255,45,85,0.6)" stroke-width="2.5"/>
+            <path d="M63,36 Q76,27 89,36" stroke="#0a0010" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- 코 -->
+          <ellipse cx="55" cy="58" rx="4" ry="2.5" fill="rgba(160,80,40,0.28)"/>
+          <ellipse cx="65" cy="58" rx="4" ry="2.5" fill="rgba(160,80,40,0.28)"/>
+
+          <!-- 입 -->
+          <path d="M46,69 Q60,64 74,69" stroke="#7a3010" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M46,69 Q41,75 43,79" stroke="#7a3010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M74,69 Q79,75 77,79" stroke="#7a3010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+          <!-- 볼터치 -->
+          <ellipse id="blushL" cx="33" cy="55" rx="10" ry="6" fill="rgba(255,120,100,0.22)"/>
+          <ellipse id="blushR" cx="87" cy="55" rx="10" ry="6" fill="rgba(255,120,100,0.22)"/>
+
+          <!-- 땀방울 -->
+          <g style="animation:sweat-drop 1.2s ease-in-out infinite;">
+            <path d="M93,24 Q99,12 95,5 Q91,12 93,24Z" fill="rgba(100,180,255,0.88)"/>
+          </g>
+          <g style="animation:sweat-drop 1.2s ease-in-out infinite;animation-delay:0.45s;">
+            <path d="M101,38 Q106,27 103,21 Q100,27 101,38Z" fill="rgba(100,180,255,0.72)"/>
+          </g>
+        </g><!-- /charBody -->
+      </svg>
+    </div><!-- /playerWrap -->
+
+  </div><!-- /svgLayer -->
+
   <div id="ui">
     <div id="awakeOverlay"></div>
     <div id="awakeBar"></div>
-
     <div id="hud">
-      <div id="scoreBox">
-        🏃 <span id="distD">0</span>m<br>
-        🏆 <span id="bestD">0</span>m
-      </div>
-      <div id="gaugeBox">
-        ⚡ 중2병 각성
-        <div id="gaugeBar"><div id="gaugeFill"></div></div>
-      </div>
+      <div id="scoreBox">🏃 <span id="distD">0</span>m<br>🏆 <span id="bestD">0</span>m</div>
+      <div id="gaugeBox">⚡ 중2병 각성<div id="gaugeBar"><div id="gaugeFill"></div></div></div>
     </div>
-
     <div id="shieldHUD">🛡️ 보호막</div>
     <div id="awakeText">😤 중2병 각성!!</div>
-    <div id="hint">👆 화면 탭 = 점프!</div>
+    <div id="hint">👆 탭 = 점프 / 꾹 = 높이!</div>
 
     <div id="startScreen">
       <h1>지각런</h1>
@@ -257,7 +338,7 @@ canvas {
       <div id="controlGuide">
         <div class="ctrl"><div class="icon">👆</div><div class="label">탭 = 점프</div></div>
         <div class="ctrl"><div class="icon">✊</div><div class="label">꾹 = 높이점프</div></div>
-        <div class="ctrl"><div class="icon">🛡️</div><div class="label">방패 먹기</div></div>
+        <div class="ctrl"><div class="icon">⚡</div><div class="label">각성 자동발동</div></div>
       </div>
       <button class="btn" id="startBtn">억지로 달리기</button>
     </div>
@@ -275,236 +356,536 @@ canvas {
 
 <script>
 // ═══════════════════════════════════════
+//  SVG 장애물 정의 (강드로우 설계)
+// ═══════════════════════════════════════
+const OBS_DEFS = [
+  {
+    id:'chihuahua', wr:0.07, hr:0.11,
+    svg:`<svg viewBox="0 0 90 80" overflow="visible" style="width:100%;height:100%;">
+      <!-- 치와와 — 작고 사납게 -->
+      <!-- 몸 -->
+      <ellipse cx="45" cy="55" rx="28" ry="18" fill="#c8a060"/>
+      <!-- 꼬리 (빳빳이 세움) -->
+      <path d="M70,50 Q82,30 78,18" stroke="#c8a060" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M78,18 Q82,10 86,8" stroke="#c8a060" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 뒷다리 -->
+      <g style="animation:dog-leg 0.3s ease-in-out infinite;transform-origin:62px 65px;">
+        <rect x="58" y="65" width="10" height="18" rx="4" fill="#b89050"/>
+        <ellipse cx="63" cy="84" rx="9" ry="5" fill="#a08040"/>
+      </g>
+      <g style="animation:dog-leg 0.3s ease-in-out infinite reverse;transform-origin:50px 65px;">
+        <rect x="46" y="65" width="10" height="18" rx="4" fill="#c8a060"/>
+        <ellipse cx="51" cy="84" rx="9" ry="5" fill="#b89050"/>
+      </g>
+      <!-- 앞다리 -->
+      <g style="animation:dog-leg 0.3s ease-in-out infinite;transform-origin:32px 65px;">
+        <rect x="28" y="65" width="10" height="18" rx="4" fill="#b89050"/>
+        <ellipse cx="33" cy="84" rx="9" ry="5" fill="#a08040"/>
+      </g>
+      <g style="animation:dog-leg 0.3s ease-in-out infinite reverse;transform-origin:22px 65px;">
+        <rect x="18" y="65" width="10" height="18" rx="4" fill="#c8a060"/>
+        <ellipse cx="23" cy="84" rx="9" ry="5" fill="#b89050"/>
+      </g>
+      <!-- 목 -->
+      <ellipse cx="28" cy="46" rx="12" ry="10" fill="#c8a060"/>
+      <!-- 머리 -->
+      <ellipse cx="22" cy="28" rx="20" ry="18" fill="#c8a060"/>
+      <!-- 큰 귀 (치와와) -->
+      <ellipse cx="6" cy="16" rx="8" ry="14" fill="#d4a870" transform="rotate(-20,6,16)"/>
+      <ellipse cx="38" cy="14" rx="8" ry="14" fill="#d4a870" transform="rotate(20,38,14)"/>
+      <ellipse cx="6" cy="16" rx="5" ry="10" fill="rgba(255,150,150,0.4)" transform="rotate(-20,6,16)"/>
+      <ellipse cx="38" cy="14" rx="5" ry="10" fill="rgba(255,150,150,0.4)" transform="rotate(20,38,14)"/>
+      <!-- 눈 (부릅뜸) -->
+      <ellipse cx="14" cy="26" rx="7" ry="8" fill="white"/>
+      <ellipse cx="14" cy="27" rx="4.5" ry="5.5" fill="#2a1a08"/>
+      <ellipse cx="12" cy="25" rx="2" ry="2.2" fill="white"/>
+      <ellipse cx="30" cy="26" rx="7" ry="8" fill="white"/>
+      <ellipse cx="30" cy="27" rx="4.5" ry="5.5" fill="#2a1a08"/>
+      <ellipse cx="28" cy="25" rx="2" ry="2.2" fill="white"/>
+      <!-- 눈썹 (화남) -->
+      <path d="M8,20 Q14,16 20,19" stroke="#8a5520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M24,19 Q30,16 36,20" stroke="#8a5520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- 코 -->
+      <ellipse cx="22" cy="33" rx="4" ry="3" fill="#8a5520"/>
+      <ellipse cx="20" cy="32" rx="1.5" ry="1" fill="rgba(255,255,255,0.4)"/>
+      <!-- 입 (이빨) -->
+      <path d="M14,38 Q22,44 30,38" stroke="#8a5520" stroke-width="2" fill="none"/>
+      <rect x="17" y="37" width="5" height="5" rx="1" fill="white"/>
+      <rect x="23" y="37" width="5" height="5" rx="1" fill="white"/>
+      <!-- 짖는 선 -->
+      <text x="38" y="18" font-size="12" fill="rgba(255,80,80,0.8)" font-weight="bold">멍!</text>
+      <!-- 목줄 -->
+      <rect x="16" y="42" width="24" height="5" rx="2.5" fill="#e53935"/>
+    </svg>`,
+    anim:'dog-run'
+  },
+  {
+    id:'delivery', wr:0.06, hr:0.20,
+    svg:`<svg viewBox="0 0 80 160" overflow="visible" style="width:100%;height:100%;">
+      <!-- 택배 아저씨 — 박스 탑 쌓고 비틀거림 -->
+      <!-- 박스 더미 (머리 위) -->
+      <g style="animation:box-shake 0.5s ease-in-out infinite;transform-origin:40px 60px;">
+        <!-- 3층 박스 -->
+        <rect x="10" y="8" width="60" height="28" rx="4" fill="#f5a623"/>
+        <rect x="12" y="10" width="56" height="24" rx="3" fill="none" stroke="#e8960a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="40" y1="8" x2="40" y2="36" stroke="#e8960a" stroke-width="1.5"/>
+        <text x="40" y="26" text-anchor="middle" font-size="9" fill="#8a5a00" font-weight="bold">📦</text>
+        <!-- 2층 박스 -->
+        <rect x="5" y="36" width="70" height="30" rx="4" fill="#f5c842"/>
+        <rect x="7" y="38" width="66" height="26" rx="3" fill="none" stroke="#e8b810" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="40" y1="36" x2="40" y2="66" stroke="#e8b810" stroke-width="1.5"/>
+        <text x="40" y="55" text-anchor="middle" font-size="9" fill="#8a6a00" font-weight="bold">📦</text>
+        <!-- 1층 박스 -->
+        <rect x="2" y="66" width="76" height="32" rx="4" fill="#e8a020"/>
+        <rect x="4" y="68" width="72" height="28" rx="3" fill="none" stroke="#d09010" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="40" y1="66" x2="40" y2="98" stroke="#d09010" stroke-width="1.5"/>
+        <text x="40" y="86" text-anchor="middle" font-size="10" fill="#7a5000" font-weight="bold">📦</text>
+        <!-- 테이프 -->
+        <rect x="30" y="36" width="20" height="4" fill="rgba(100,180,255,0.6)"/>
+        <rect x="28" y="66" width="24" height="4" fill="rgba(100,180,255,0.6)"/>
+      </g>
+      <!-- 몸통 (조끼) -->
+      <rect x="18" y="98" width="44" height="36" rx="8" fill="#e53935"/>
+      <rect x="18" y="98" width="44" height="36" rx="8" fill="none" stroke="#c62828" stroke-width="1"/>
+      <!-- 안전 조끼 반사띠 -->
+      <rect x="18" y="112" width="44" height="5" fill="rgba(255,255,100,0.7)"/>
+      <rect x="18" y="122" width="44" height="3" fill="rgba(255,255,100,0.5)"/>
+      <!-- 회사 로고 -->
+      <text x="40" y="110" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.8)" font-weight="bold">택배</text>
+      <!-- 팔 (박스 들기) -->
+      <g style="animation:delivery-wobble 0.5s ease-in-out infinite;transform-origin:20px 105px;">
+        <rect x="4" y="98" width="16" height="32" rx="6" fill="#e53935"/>
+        <rect x="2" y="128" width="20" height="6" rx="3" fill="#f5a623"/><!-- 박스 받침 -->
+        <ellipse cx="12" cy="136" rx="10" ry="7" fill="#f5c5a0"/>
+      </g>
+      <g style="animation:delivery-wobble 0.5s ease-in-out infinite reverse;transform-origin:60px 105px;">
+        <rect x="60" y="98" width="16" height="32" rx="6" fill="#e53935"/>
+        <rect x="58" y="128" width="20" height="6" rx="3" fill="#f5a623"/>
+        <ellipse cx="68" cy="136" rx="10" ry="7" fill="#f5c5a0"/>
+      </g>
+      <!-- 다리 -->
+      <g style="animation:leg-fwd 0.45s ease-in-out infinite;transform-origin:30px 134px;">
+        <rect x="20" y="134" width="18" height="32" rx="7" fill="#3e2723"/>
+        <ellipse cx="29" cy="168" rx="16" ry="8" fill="#1a1a1a"/>
+      </g>
+      <g style="animation:leg-back 0.45s ease-in-out infinite;transform-origin:50px 134px;">
+        <rect x="42" y="134" width="18" height="32" rx="7" fill="#4e342e"/>
+        <ellipse cx="51" cy="168" rx="16" ry="8" fill="#1a1a1a"/>
+      </g>
+      <!-- 얼굴 (박스 뒤로 살짝) -->
+      <ellipse cx="40" cy="94" rx="16" ry="8" fill="#f5c5a0"/>
+      <!-- 눈 (힘듦) -->
+      <path d="M31,91 Q35,89 39,91" stroke="#2a1a08" stroke-width="2" fill="none"/>
+      <path d="M41,91 Q45,89 49,91" stroke="#2a1a08" stroke-width="2" fill="none"/>
+      <!-- 땀 -->
+      <path d="M52,88 Q56,80 53,75 Q50,80 52,88Z" fill="rgba(100,180,255,0.8)"/>
+    </svg>`,
+    anim:'delivery-wobble'
+  },
+  {
+    id:'moto', wr:0.14, hr:0.13,
+    svg:`<svg viewBox="0 0 130 110" overflow="visible" style="width:100%;height:100%;">
+      <!-- 오토바이 배달부 -->
+      <!-- 바퀴 뒤 -->
+      <circle cx="105" cy="85" r="22" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="3"/>
+      <circle cx="105" cy="85" r="14" fill="#3a3a3a"/>
+      <circle cx="105" cy="85" r="6" fill="#555"/>
+      <!-- 바퀴 앞 -->
+      <circle cx="25" cy="85" r="22" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="3"/>
+      <circle cx="25" cy="85" r="14" fill="#3a3a3a"/>
+      <circle cx="25" cy="85" r="6" fill="#555"/>
+      <!-- 오토바이 프레임 -->
+      <path d="M25,63 L65,48 L105,63" stroke="#e53935" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M65,48 L70,85 L105,85" stroke="#c62828" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <!-- 엔진 -->
+      <rect x="55" y="62" width="40" height="22" rx="6" fill="#e53935"/>
+      <rect x="60" y="67" width="30" height="12" rx="4" fill="#c62828"/>
+      <!-- 배달통 (뒤) -->
+      <rect x="90" y="38" width="38" height="30" rx="5" fill="#ff9800"/>
+      <rect x="92" y="40" width="34" height="26" rx="4" fill="none" stroke="#e65100" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="109" y="57" text-anchor="middle" font-size="9" fill="#e65100" font-weight="bold">배달</text>
+      <!-- 핸들 -->
+      <path d="M22,55 L38,52 L42,58" stroke="#555" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- 라이더 몸 -->
+      <rect x="40" y="30" width="36" height="38" rx="8" fill="#212121"/>
+      <!-- 조끼 -->
+      <rect x="42" y="36" width="32" height="30" rx="5" fill="#e53935"/>
+      <rect x="42" y="50" width="32" height="4" fill="rgba(255,255,100,0.7)"/>
+      <!-- 헬멧 -->
+      <ellipse cx="58" cy="22" rx="22" ry="20" fill="#ff5722"/>
+      <rect x="36" y="22" width="44" height="12" rx="0" fill="#ff5722"/>
+      <ellipse cx="58" cy="36" rx="22" ry="8" fill="#ff5722"/>
+      <!-- 헬멧 바이저 -->
+      <rect x="40" y="20" width="36" height="14" rx="4" fill="rgba(0,180,255,0.6)"/>
+      <rect x="42" y="22" width="32" height="10" rx="3" fill="rgba(0,220,255,0.4)"/>
+      <!-- 헬멧 줄무늬 -->
+      <line x1="36" y1="26" x2="80" y2="26" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+      <!-- 팔 -->
+      <rect x="25" y="42" width="18" height="12" rx="5" fill="#212121"/>
+      <ellipse cx="23" cy="52" rx="8" ry="6" fill="#f5c5a0"/>
+      <!-- 배기가스 -->
+      <ellipse cx="112" cy="88" rx="5" ry="3" fill="rgba(180,180,180,0.5)" style="animation:sweat-drop 0.6s ease-in-out infinite;"/>
+      <ellipse cx="118" cy="85" rx="4" ry="2.5" fill="rgba(180,180,180,0.35)" style="animation:sweat-drop 0.6s ease-in-out infinite;animation-delay:0.2s;"/>
+      <!-- 속도선 -->
+      <line x1="-15" y1="55" x2="0" y2="55" stroke="rgba(255,100,0,0.5)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="-20" y1="68" x2="-2" y2="68" stroke="rgba(255,100,0,0.4)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="-12" y1="80" x2="0" y2="80" stroke="rgba(255,100,0,0.3)" stroke-width="2" stroke-linecap="round"/>
+    </svg>`,
+    anim:'moto-zoom'
+  },
+  {
+    id:'coneman', wr:0.05, hr:0.18,
+    svg:`<svg viewBox="0 0 70 145" overflow="visible" style="width:100%;height:100%;">
+      <!-- 공사장 아저씨 -->
+      <!-- 다리 -->
+      <g style="animation:cone-wave 0.6s ease-in-out infinite;transform-origin:35px 100px;">
+        <rect x="16" y="100" width="16" height="38" rx="6" fill="#f57f17"/>
+        <ellipse cx="24" cy="140" rx="14" ry="7" fill="#1a1a1a"/>
+      </g>
+      <g style="animation:cone-wave 0.6s ease-in-out infinite reverse;transform-origin:35px 100px;">
+        <rect x="38" y="100" width="16" height="38" rx="6" fill="#e65100"/>
+        <ellipse cx="46" cy="140" rx="14" ry="7" fill="#1a1a1a"/>
+      </g>
+      <!-- 몸통 (형광 조끼) -->
+      <rect x="12" y="62" width="46" height="42" rx="9" fill="#f9a825"/>
+      <!-- 반사 띠 -->
+      <rect x="12" y="76" width="46" height="5" fill="rgba(255,255,255,0.7)"/>
+      <rect x="12" y="87" width="46" height="3" fill="rgba(255,255,255,0.5)"/>
+      <!-- 안전 조끼 앞 -->
+      <rect x="12" y="62" width="15" height="42" rx="0" fill="#e65100"/>
+      <rect x="43" y="62" width="15" height="42" rx="0" fill="#e65100"/>
+      <!-- 팔 (콘 들고 막아섬) -->
+      <g style="animation:cone-wave 0.6s ease-in-out infinite;transform-origin:10px 70px;">
+        <rect x="0" y="68" width="14" height="28" rx="6" fill="#f9a825"/>
+        <ellipse cx="7" cy="99" rx="8" ry="7" fill="#f5c5a0"/>
+      </g>
+      <!-- 콘 들고있는 팔 -->
+      <g style="animation:cone-wave 0.6s ease-in-out infinite reverse;transform-origin:60px 65px;">
+        <rect x="58" y="60" width="14" height="32" rx="6" fill="#e65100"/>
+        <ellipse cx="65" cy="94" rx="8" ry="7" fill="#f5c5a0"/>
+        <!-- 콘 (손에 들고 있음) -->
+        <g transform="translate(52,40) rotate(15)">
+          <polygon points="10,0 0,50 20,50" fill="#ff5722"/>
+          <rect x="0" y="44" width="20" height="7" rx="2" fill="#fff"/>
+          <rect x="0" y="35" width="20" height="5" rx="1" fill="rgba(255,255,255,0.6)"/>
+          <rect x="0" y="25" width="20" height="4" rx="1" fill="rgba(255,255,255,0.4)"/>
+        </g>
+      </g>
+      <!-- 목 -->
+      <rect x="26" y="52" width="18" height="14" rx="4" fill="#f5c5a0"/>
+      <!-- 안전모 (노란) -->
+      <ellipse cx="35" cy="36" rx="26" ry="22" fill="#ffd600"/>
+      <rect x="9" y="42" width="52" height="10" rx="5" fill="#ffd600"/>
+      <!-- 안전모 챙 -->
+      <rect x="6" y="50" width="58" height="6" rx="3" fill="#f9a825"/>
+      <!-- 안전모 로고 -->
+      <text x="35" y="40" text-anchor="middle" font-size="10" fill="#e65100" font-weight="bold">⚠</text>
+      <!-- 얼굴 -->
+      <ellipse cx="35" cy="52" rx="18" ry="12" fill="#f5c5a0"/>
+      <!-- 눈 (험악) -->
+      <ellipse cx="27" cy="50" rx="5" ry="5.5" fill="white"/>
+      <ellipse cx="27" cy="51" rx="3.5" ry="4" fill="#2a1a08"/>
+      <ellipse cx="25" cy="49" rx="1.5" ry="1.8" fill="white"/>
+      <ellipse cx="43" cy="50" rx="5" ry="5.5" fill="white"/>
+      <ellipse cx="43" cy="51" rx="3.5" ry="4" fill="#2a1a08"/>
+      <ellipse cx="41" cy="49" rx="1.5" ry="1.8" fill="white"/>
+      <!-- 눈썹 (험악) -->
+      <path d="M22,46 Q27,43 32,45" stroke="#5a3010" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <path d="M38,45 Q43,43 48,46" stroke="#5a3010" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <!-- 콧수염 -->
+      <path d="M27,56 Q35,60 43,56" stroke="#5a3010" stroke-width="2" fill="none"/>
+      <ellipse cx="35" cy="55" rx="4" ry="2.5" fill="#a07040"/>
+      <!-- 입 (호루라기) -->
+      <rect x="30" y="58" width="10" height="5" rx="2" fill="#555"/>
+      <rect x="36" y="56" width="6" height="3" rx="1" fill="#777"/>
+    </svg>`,
+    anim:'cone-wave'
+  }
+];
+
+// 파워업 SVG 정의
+const PU_DEFS = [
+  {
+    id:'energy', type:'energy',
+    svg:`<svg viewBox="0 0 50 80" overflow="visible" style="width:100%;height:100%;animation:energy-bob 1.1s ease-in-out infinite,energy-glow 1.1s ease-in-out infinite;">
+      <!-- 에너지 드링크 캔 -->
+      <ellipse cx="25" cy="12" rx="18" ry="8" fill="#00e5ff"/>
+      <rect x="7" y="10" width="36" height="58" fill="linear-gradient(#00bcd4,#006064)"/>
+      <rect x="7" y="10" width="36" height="58" fill="#00bcd4"/>
+      <!-- 캔 그라디언트 -->
+      <rect x="7" y="10" width="14" height="58" fill="rgba(255,255,255,0.15)"/>
+      <rect x="7" y="10" width="4" height="58" fill="rgba(255,255,255,0.25)"/>
+      <ellipse cx="25" cy="68" rx="18" ry="8" fill="#006064"/>
+      <!-- 번개 로고 -->
+      <polygon points="29,22 20,42 26,42 21,60 34,36 26,36 32,22" fill="#ffff00"/>
+      <polygon points="29,22 20,42 26,42 21,60 34,36 26,36 32,22" fill="none" stroke="rgba(255,200,0,0.5)" stroke-width="1"/>
+      <!-- 텍스트 -->
+      <text x="25" y="18" text-anchor="middle" font-size="7" fill="white" font-weight="bold">⚡PRO</text>
+      <!-- 탭 -->
+      <ellipse cx="25" cy="10" rx="10" ry="4" fill="#80deea"/>
+      <rect x="22" y="6" width="6" height="5" rx="2" fill="#4dd0e1"/>
+      <!-- 캔 링 -->
+      <ellipse cx="25" cy="10" rx="18" ry="7" fill="none" stroke="#00acc1" stroke-width="2"/>
+    </svg>`,
+    w:0.03, h:0.09
+  },
+  {
+    id:'shield', type:'shield',
+    svg:`<svg viewBox="0 0 60 70" overflow="visible" style="width:100%;height:100%;animation:shield-bob 1.1s ease-in-out infinite;">
+      <!-- 보호막 아이템 -->
+      <path d="M30,5 L55,18 L55,42 Q55,62 30,68 Q5,62 5,42 L5,18 Z" fill="#1565c0"/>
+      <path d="M30,10 L50,22 L50,42 Q50,59 30,64 Q10,59 10,42 L10,22 Z" fill="#1e88e5"/>
+      <!-- 방패 테두리 -->
+      <path d="M30,5 L55,18 L55,42 Q55,62 30,68 Q5,62 5,42 L5,18 Z" fill="none" stroke="#42a5f5" stroke-width="2"/>
+      <!-- 방패 문양 -->
+      <path d="M30,16 L40,24 L40,38 Q40,50 30,54 Q20,50 20,38 L20,24 Z" fill="rgba(255,255,255,0.15)"/>
+      <!-- 십자 -->
+      <rect x="27" y="22" width="6" height="24" rx="2" fill="rgba(255,255,255,0.8)"/>
+      <rect x="19" y="30" width="22" height="6" rx="2" fill="rgba(255,255,255,0.8)"/>
+      <!-- 빛나는 효과 -->
+      <ellipse cx="20" cy="22" rx="5" ry="5" fill="rgba(255,255,255,0.3)"/>
+      <!-- 글로우 -->
+      <path d="M30,5 L55,18 L55,42 Q55,62 30,68 Q5,62 5,42 L5,18 Z" fill="none" stroke="rgba(100,180,255,0.5)" stroke-width="4"/>
+    </svg>`,
+    w:0.03, h:0.09
+  }
+];
+
+// ═══════════════════════════════════════
 //  캔버스 & 리사이즈
 // ═══════════════════════════════════════
-const canvas = document.getElementById('gc');
-const ctx = canvas.getContext('2d');
-let W, H, GY; // GY = ground Y
-
-function resize() {
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-  GY = Math.round(H * 0.78);
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+let W,H,GY;
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+  GY=Math.round(H*0.78);
 }
 resize();
-window.addEventListener('resize', resize);
+window.addEventListener('resize',resize);
 
-// ═══════════════════════════════════════
-//  상수 (비율 기반)
-// ═══════════════════════════════════════
-const PW  = () => Math.round(W * 0.062); // player width
-const PH  = () => Math.round(H * 0.20);  // player height
-const GRAVITY    = 0.6;
-const JUMP_V     = () => -(H * 0.042);
-const LONGJUMP_V = () => -(H * 0.054);
-const AWAKE_DUR  = 5;
+// ─── 상수 ───
+const PW=()=>Math.round(W*0.055);
+const PH=()=>Math.round(H*0.20);
+const GRAVITY=0.55;
+const JUMP_V=()=>-(H*0.040);
+const LONGJUMP_V=()=>-(H*0.068);
+const AWAKE_DUR=5;
+const JUMP_THRESHOLD=150;
 
-// ═══════════════════════════════════════
-//  게임 상태
-// ═══════════════════════════════════════
-let gState = 'start';
-let score=0, best=0, elapsed=0, awakeCnt=0;
-let gauge=0, isAwake=false, awakeT=0;
-let shield=false, shieldFlash=0, mult=1;
-let px, py, pvy, pJumps, onGround;
-let obstacles=[], obsTimer=0, obsNext=2.5;
-let powerups=[], puTimer=0, puNext=12;
+// ─── 게임 상태 ───
+let gState='start';
+let score=0,best=0,elapsed=0,awakeCnt=0;
+let gauge=0,isAwake=false,awakeT=0;
+let shield=false,shieldFlash=0,mult=1;
+let px,py,pvy,onGround;
+let obstacles=[],obsTimer=0,obsNext=2.5;
+let powerups=[],puTimer=0,puNext=14;
 let particles=[];
-let bgScroll=0, shake=0;
+let bgScroll=0,shake=0;
 let lastTs=null;
-let pressT=0, pressing=false;
+let pressT=0,pressing=false;
+let bgObjects=[],clouds=[];
 
-// 배경 오브젝트 (구간별)
-let bgObjects=[];
-// 구름
-let clouds=[];
-
-// ─── 속도 곡선 ───
-function spd(t) {
-  if(t<40) return 1.0 + t*0.012;
-  if(t<70) return 1.48 + (t-40)*0.022;
-  return Math.min(2.14 + Math.pow(1.022, t-70)*0.55, 9);
+function spd(t){
+  if(t<40) return 1.0+t*0.012;
+  if(t<70) return 1.48+(t-40)*0.022;
+  return Math.min(2.14+Math.pow(1.022,t-70)*0.55,9);
 }
 
-// ─── 초기화 ───
-function initBg() {
-  clouds = [];
-  for(let i=0;i<5;i++) clouds.push({x:W*(0.1+i*0.2), y:H*(0.06+Math.random()*0.12), s:0.7+Math.random()*0.7});
+// ─── SVG 플레이어 크기/위치 ───
+function updatePlayerSVG(){
+  const pw=PW(), ph=PH();
+  const wrap=document.getElementById('playerWrap');
+  wrap.style.left=(px)+'px';
+  wrap.style.top=(py)+'px';
+  wrap.style.width=pw+'px';
+  wrap.style.height=ph+'px';
 
-  bgObjects = [];
-  // 골목 빌라들
-  let bx=0;
-  while(bx < W*3) {
-    const seg = Math.floor(bx / W) % 3; // 0:골목 1:상가 2:학교앞
-    const bw = W*(0.055+Math.random()*0.07);
-    const bh = H*(0.18+Math.random()*0.28);
-    bgObjects.push({x:bx, w:bw, h:bh, seg});
-    bx += bw + W*0.012;
+  // 각성 상태 전환
+  const charBody=document.getElementById('charBody');
+  const auraLayer=document.getElementById('auraLayer');
+  const eyeNormal=document.getElementById('eyeNormal');
+  const eyeAwake=document.getElementById('eyeAwake');
+  const crackLines=document.getElementById('crackLines');
+  const tieFire=document.getElementById('tieFire');
+  const hairBack=document.getElementById('hairBack');
+  const faceBase=document.getElementById('faceBase');
+  const blushL=document.getElementById('blushL');
+  const blushR=document.getElementById('blushR');
+  const speedLines=document.getElementById('speedLines');
+
+  if(isAwake){
+    charBody.style.animation='awake-body 0.32s ease-in-out infinite';
+    auraLayer.setAttribute('opacity','1');
+    eyeNormal.style.display='none';
+    eyeAwake.setAttribute('display','block');
+    crackLines.setAttribute('opacity','1');
+    tieFire.setAttribute('opacity','1');
+    faceBase.setAttribute('fill','#c88060');
+    blushL.setAttribute('fill','rgba(200,0,100,0.28)');
+    blushR.setAttribute('fill','rgba(200,0,100,0.28)');
+    hairBack.setAttribute('fill','#0a0010');
+    // 머리카락 모두 어둡게
+    hairBack.querySelectorAll('ellipse,path').forEach(el=>el.setAttribute('fill','#0a0010'));
+    speedLines.innerHTML=`
+      <line x1="-24" y1="65" x2="-5" y2="65" stroke="rgba(255,45,85,0.5)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="-30" y1="80" x2="-7" y2="80" stroke="rgba(255,45,85,0.4)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="-22" y1="95" x2="-5" y2="95" stroke="rgba(124,58,237,0.3)" stroke-width="2" stroke-linecap="round"/>
+    `;
+  } else {
+    charBody.style.animation='run-body 0.42s ease-in-out infinite';
+    auraLayer.setAttribute('opacity','0');
+    eyeNormal.style.display='';
+    eyeAwake.setAttribute('display','none');
+    crackLines.setAttribute('opacity','0');
+    tieFire.setAttribute('opacity','0');
+    faceBase.setAttribute('fill','#f5c5a0');
+    blushL.setAttribute('fill','rgba(255,120,100,0.22)');
+    blushR.setAttribute('fill','rgba(255,120,100,0.22)');
+    speedLines.innerHTML=`
+      <line x1="-20" y1="68" x2="-5" y2="68" stroke="rgba(255,255,255,0.22)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="-25" y1="82" x2="-7" y2="82" stroke="rgba(255,255,255,0.16)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-18" y1="96" x2="-5" y2="96" stroke="rgba(255,255,255,0.10)" stroke-width="1.5" stroke-linecap="round"/>
+    `;
   }
 }
 
-function reset() {
-  score=0; elapsed=0; awakeCnt=0;
-  gauge=0; isAwake=false; awakeT=0;
-  shield=false; shieldFlash=0; mult=1;
-  pressing=false; obstacles=[]; powerups=[]; particles=[];
-  obsTimer=0; obsNext=2.5; puTimer=0; puNext=12;
-  bgScroll=0; shake=0; lastTs=null;
+// ─── 초기화 ───
+function initBg(){
+  clouds=[];
+  for(let i=0;i<6;i++) clouds.push({x:W*(0.1+i*0.18),y:H*(0.05+Math.random()*0.14),s:0.6+Math.random()*0.8});
+  bgObjects=[];
+  let bx=0;
+  while(bx<W*3.5){
+    const seg=Math.floor(bx/W)%3;
+    const bw=W*(0.055+Math.random()*0.075);
+    const bh=H*(0.18+Math.random()*0.30);
+    bgObjects.push({x:bx,w:bw,h:bh,seg});
+    bx+=bw+W*0.01;
+  }
+}
 
-  px = W*0.13;
-  py = GY - PH();
-  pvy = 0; pJumps = 0; onGround = true;
-
+function reset(){
+  score=0;elapsed=0;awakeCnt=0;
+  gauge=0;isAwake=false;awakeT=0;
+  shield=false;shieldFlash=0;mult=1;
+  pressing=false;obstacles=[];powerups=[];particles=[];
+  // SVG 장애물 제거
+  document.querySelectorAll('.obsSVG,.puSVG').forEach(e=>e.remove());
+  obsTimer=0;obsNext=2.5;puTimer=0;puNext=14;
+  bgScroll=0;shake=0;lastTs=null;
+  px=W*0.13; py=GY-PH(); pvy=0; onGround=true;
   initBg();
-
   document.getElementById('awakeOverlay').classList.remove('on');
   document.getElementById('awakeBar').style.display='none';
   document.getElementById('awakeText').classList.remove('pop');
   document.getElementById('shieldHUD').style.display='none';
+  updatePlayerSVG();
 }
 
-// ═══════════════════════════════════════
-//  입력 — 터치 / 마우스 / 키
-// ═══════════════════════════════════════
-function inputDown(e) {
-  // 버튼 터치는 게임 입력으로 처리 안 함
+// ─── 입력 ───
+function requestFS(){
+  const el=document.documentElement;
+  try{ if(el.requestFullscreen) el.requestFullscreen({navigationUI:'hide'}); else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen(); }catch(e){}
+  try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){}
+}
+
+function inputDown(e){
   if(e.target.closest('.btn')) return;
   e.preventDefault();
-  if(gState !== 'playing') return;
-  pressT = performance.now();
-  pressing = true;
-  doJump();
+  if(gState!=='playing') return;
+  pressT=performance.now(); pressing=true;
+  if(onGround){ pvy=JUMP_V(); onGround=false; spawnPtc(px+PW()/2,GY,'#ffffff',5); }
 }
-function inputUp(e) {
+function inputUp(e){
   e.preventDefault();
   if(!pressing) return;
-  pressing = false;
-  if(performance.now()-pressT > 180 && gState==='playing') {
-    pvy = Math.min(pvy, LONGJUMP_V());
-  }
-}
-function doJump() {
-  if(onGround || pJumps < 1) {
-    pvy = JUMP_V();
-    pJumps++;
-    onGround = false;
-    // 점프 파티클
-    spawnPtc(px+PW()/2, GY, '#ffffff', 5);
-  }
+  const held=performance.now()-pressT; pressing=false;
+  if(gState!=='playing') return;
+  if(held>=JUMP_THRESHOLD&&pvy<0){ pvy=LONGJUMP_V(); spawnPtc(px+PW()/2,py+PH()/2,'#ffcc00',6); }
 }
 
-// 이벤트는 gameWrapper 전체에 걸기 (UI 레이어 터치 씹힘 방지)
-const gw = document.getElementById('gameWrapper');
-gw.addEventListener('touchstart', inputDown, {passive:false});
-gw.addEventListener('touchend',   inputUp,   {passive:false});
-gw.addEventListener('mousedown',  inputDown);
-gw.addEventListener('mouseup',    inputUp);
-document.addEventListener('keydown', e=>{ if(e.code==='Space'){e.preventDefault();inputDown(e);} });
-document.addEventListener('keyup',   e=>{ if(e.code==='Space'){e.preventDefault();inputUp(e);} });
+const gw=document.getElementById('gameWrapper');
+gw.addEventListener('touchstart',inputDown,{passive:false});
+gw.addEventListener('touchend',inputUp,{passive:false});
+gw.addEventListener('mousedown',inputDown);
+gw.addEventListener('mouseup',inputUp);
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();inputDown(e);}});
+document.addEventListener('keyup',e=>{if(e.code==='Space'){e.preventDefault();inputUp(e);}});
 
-// 버튼 클릭 — pointer-events:all
-function startGame() {
-  document.getElementById('startScreen').style.display='none';
-  reset(); gState='playing';
-  showHint();
-}
-function restartGame() {
-  document.getElementById('gameOverScreen').style.display='none';
-  reset(); gState='playing';
-  showHint();
-}
-function showHint() {
-  const h = document.getElementById('hint');
-  h.style.display='block';
-  setTimeout(()=>h.style.display='none', 3000);
-}
+function startGame(){ requestFS(); document.getElementById('startScreen').style.display='none'; reset(); gState='playing'; showHint(); }
+function restartGame(){ requestFS(); document.getElementById('gameOverScreen').style.display='none'; reset(); gState='playing'; showHint(); }
+function showHint(){ const h=document.getElementById('hint'); h.style.display='block'; setTimeout(()=>h.style.display='none',3000); }
 
-// 버튼 — touchstart + click 둘 다 등록 (터치/PC 모두 대응)
-function bindBtn(id, fn) {
-  const el = document.getElementById(id);
-  let touched = false;
-  el.addEventListener('touchstart', e=>{
-    e.stopPropagation(); e.preventDefault();
-    touched = true;
-    fn();
-  }, {passive:false});
-  el.addEventListener('click', e=>{
-    e.stopPropagation();
-    if(touched){ touched=false; return; } // 터치 후 click 중복 방지
-    fn();
-  });
+function bindBtn(id,fn){
+  const el=document.getElementById(id); let touched=false;
+  el.addEventListener('touchstart',e=>{e.stopPropagation();e.preventDefault();touched=true;fn();},{passive:false});
+  el.addEventListener('click',e=>{e.stopPropagation();if(touched){touched=false;return;}fn();});
 }
-bindBtn('startBtn', startGame);
-bindBtn('restartBtn', restartGame);
+bindBtn('startBtn',startGame);
+bindBtn('restartBtn',restartGame);
 
-// ═══════════════════════════════════════
-//  파티클
-// ═══════════════════════════════════════
-function spawnPtc(x,y,col,n=8) {
+// ─── 파티클 ───
+function spawnPtc(x,y,col,n=8){
   for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2, s=(2+Math.random()*4)*(W/800);
-    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,
-      life:1, decay:0.028+Math.random()*0.032,
-      size:(3+Math.random()*6)*(W/800), col});
+    const a=Math.random()*Math.PI*2,s=(2+Math.random()*4)*(W/800);
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1,decay:0.028+Math.random()*0.032,size:(3+Math.random()*6)*(W/800),col});
   }
 }
 
-// ═══════════════════════════════════════
-//  각성
-// ═══════════════════════════════════════
-function triggerAwake() {
-  isAwake=true; awakeT=AWAKE_DUR; awakeCnt++; gauge=0; mult=3;
+// ─── 각성 ───
+function triggerAwake(){
+  isAwake=true;awakeT=AWAKE_DUR;awakeCnt++;gauge=0;mult=3;
   document.getElementById('awakeOverlay').classList.add('on');
   document.getElementById('awakeBar').style.display='block';
   const t=document.getElementById('awakeText');
-  t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
-  shake=22;
-  spawnPtc(px+PW()/2, py+PH()/2, '#ff2d55', 22);
-  // 돌진 파괴
-  let d=0;
+  t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
+  shake=22; spawnPtc(px+PW()/2,py+PH()/2,'#ff2d55',22);
   obstacles=obstacles.filter(o=>{
-    if(d<2){d++; spawnPtc(o.x,GY-o.h/2,'#ff2d55',12); return false;}
+    if(o._d<2){o._d=(o._d||0)+1;spawnPtc(o.x,GY-o.svgH/2,'#ff2d55',10);o.el&&o.el.remove();return false;}
     return true;
   });
   setTimeout(()=>document.getElementById('awakeText').classList.remove('pop'),1500);
 }
-function endAwake() {
-  isAwake=false; mult=1;
+function endAwake(){
+  isAwake=false;mult=1;
   document.getElementById('awakeOverlay').classList.remove('on');
   document.getElementById('awakeBar').style.display='none';
 }
 
-// ═══════════════════════════════════════
-//  충돌
-// ═══════════════════════════════════════
-function overlap(ax,ay,aw,ah,bx,by,bw,bh) {
-  return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by;
+// ─── 충돌 ───
+function overlap(ax,ay,aw,ah,bx,by,bw,bh){return ax<bx+bw&&ax+aw>bx&&ay<by+bh&&ay+ah>by;}
+
+// ─── 장애물 SVG 생성 ───
+function spawnObs(){
+  const def=OBS_DEFS[Math.floor(Math.random()*OBS_DEFS.length)];
+  const svgW=W*def.wr, svgH=H*def.hr;
+  const el=document.createElement('div');
+  el.className='obsSVG';
+  el.innerHTML=def.svg;
+  el.style.cssText=`width:${svgW}px;height:${svgH}px;left:${W+40}px;top:${GY-svgH}px;`;
+  document.getElementById('svgLayer').appendChild(el);
+  obstacles.push({x:W+40,w:svgW,h:svgH,svgH,el,_passed:false,_d:0});
 }
 
-// ═══════════════════════════════════════
-//  장애물 / 파워업
-// ═══════════════════════════════════════
-const OBS=[
-  {e:'🚗', wr:0.09, hr:0.1},
-  {e:'🚧', wr:0.04, hr:0.16},
-  {e:'🚲', wr:0.058, hr:0.09},
-  {e:'🐕', wr:0.048, hr:0.072},
-];
-function spawnObs() {
-  const o=OBS[Math.floor(Math.random()*OBS.length)];
-  obstacles.push({x:W+40, w:W*o.wr, h:H*o.hr, e:o.e, _passed:false});
-}
-function spawnPU() {
-  if(Math.random()<0.55)
-    powerups.push({x:W+40, y:GY-PH()-H*0.09, e:'🛡️', _type:'shield'});
+function spawnPU(){
+  const def=PU_DEFS[Math.random()<0.6?0:1];
+  const svgW=W*def.w, svgH=H*def.h;
+  const el=document.createElement('div');
+  el.className='puSVG';
+  el.innerHTML=def.svg;
+  const yPos=GY-PH()-H*0.1;
+  el.style.cssText=`width:${svgW}px;height:${svgH}px;left:${W+40}px;top:${yPos}px;`;
+  document.getElementById('svgLayer').appendChild(el);
+  powerups.push({x:W+40,y:yPos,w:svgW,h:svgH,el,type:def.id});
 }
 
-// ═══════════════════════════════════════
-//  게임오버
-// ═══════════════════════════════════════
-function gameOver() {
+// ─── 게임오버 ───
+function gameOver(){
   gState='dead';
-  spawnPtc(px+PW()/2, py+PH()/2,'#ff4444',22);
+  spawnPtc(px+PW()/2,py+PH()/2,'#ff4444',22);
   document.getElementById('fDist').textContent=Math.floor(score);
   document.getElementById('fBest').textContent=Math.floor(best);
   document.getElementById('fAwake').textContent=awakeCnt;
@@ -512,34 +893,28 @@ function gameOver() {
   endAwake();
 }
 
-// ═══════════════════════════════════════
-//  업데이트
-// ═══════════════════════════════════════
-function update(ts) {
+// ─── 업데이트 ───
+function update(ts){
   if(!lastTs) lastTs=ts;
-  const dt=Math.min((ts-lastTs)/1000, 0.05);
+  const dt=Math.min((ts-lastTs)/1000,0.05);
   lastTs=ts;
   if(gState!=='playing') return;
-
   elapsed+=dt;
   const s=spd(elapsed)*(isAwake?1.22:1);
-  const pw=PW(), ph=PH();
+  const pw=PW(),ph=PH();
 
-  // 점수
-  score += s*dt*12*mult;
+  score+=s*dt*12*mult;
   if(score>best) best=score;
 
-  // 게이지
   if(!isAwake){
     gauge+=dt*1.1;
     if(gauge>=100) triggerAwake();
   } else {
     awakeT-=dt;
     document.getElementById('awakeBar').style.width=Math.max(0,awakeT/AWAKE_DUR*100)+'%';
-    // 2초: 주변 폭발
-    if(awakeT<=AWAKE_DUR-2 && awakeT>AWAKE_DUR-2-dt){
+    if(awakeT<=AWAKE_DUR-2&&awakeT>AWAKE_DUR-2-dt){
       obstacles=obstacles.filter(o=>{
-        if(Math.abs(o.x-px)<W*0.22){spawnPtc(o.x,GY-o.h/2,'#7c3aed',10);return false;}
+        if(Math.abs(o.x-px)<W*0.22){spawnPtc(o.x,GY-o.h/2,'#7c3aed',10);o.el&&o.el.remove();return false;}
         return true;
       });
       shake=16;
@@ -547,602 +922,184 @@ function update(ts) {
     if(awakeT<=0) endAwake();
   }
 
-  // 플레이어 물리
-  pvy+=GRAVITY;
-  py+=pvy;
-  if(py>=GY-ph){
-    py=GY-ph; pvy=0; onGround=true; pJumps=0;
-  } else onGround=false;
+  pvy+=GRAVITY; py+=pvy;
+  if(py>=GY-ph){py=GY-ph;pvy=0;onGround=true;}
+  else onGround=false;
 
-  // 배경 스크롤
   bgScroll-=s*dt*60;
+  clouds.forEach(c=>{c.x-=s*dt*22;if(c.x<-W*0.2) c.x=W+W*0.12;});
 
-  // 구름
-  clouds.forEach(c=>{ c.x-=s*dt*25; if(c.x<-W*0.18) c.x=W+W*0.1; });
-
-  // 장애물 스폰
   obsTimer+=dt;
-  if(obsTimer>=obsNext){
-    obsTimer=0; spawnObs();
-    obsNext=Math.max(0.75, 1.5+Math.random()*1.3-elapsed*0.005);
-  }
+  if(obsTimer>=obsNext){obsTimer=0;spawnObs();obsNext=Math.max(0.75,1.5+Math.random()*1.2-elapsed*0.004);}
 
-  // 장애물 처리
   const vx=s*dt*(W*0.26);
   obstacles=obstacles.filter(o=>{
     o.x-=vx;
-    if(o.x+o.w<0) return false;
-    const oy=GY-o.h, pad=pw*0.14;
-    if(overlap(px+pad,py+pad,pw-pad*2,ph-pad*2, o.x,oy,o.w,o.h)){
-      if(isAwake){ spawnPtc(o.x+o.w/2,oy+o.h/2,'#ff2d55',12); score+=60; return false; }
-      else if(shield){ shield=false; shieldFlash=32; document.getElementById('shieldHUD').style.display='none'; spawnPtc(o.x+o.w/2,oy+o.h/2,'#00bfff',12); shake=12; return false; }
-      else { gameOver(); return false; }
+    if(o.el) o.el.style.left=o.x+'px';
+    if(o.x+o.w<0){o.el&&o.el.remove();return false;}
+    const oy=GY-o.h,pad=pw*0.12;
+    if(overlap(px+pad,py+pad,pw-pad*2,ph-pad*2,o.x,oy,o.w,o.h)){
+      if(isAwake){spawnPtc(o.x+o.w/2,oy+o.h/2,'#ff2d55',12);score+=60;o.el&&o.el.remove();return false;}
+      else if(shield){shield=false;shieldFlash=32;document.getElementById('shieldHUD').style.display='none';spawnPtc(o.x+o.w/2,oy+o.h/2,'#00bfff',12);shake=12;o.el&&o.el.remove();return false;}
+      else{gameOver();return false;}
     }
-    // 근소 회피
-    if(!o._passed && o.x+o.w<px && o.x+o.w>px-vx-5){
-      o._passed=true;
-      if(!isAwake) gauge=Math.min(gauge+5,99.5);
-    }
+    if(!o._passed&&o.x+o.w<px&&o.x+o.w>px-vx-5){o._passed=true;if(!isAwake) gauge=Math.min(gauge+5,99.5);}
     return true;
   });
 
-  // 파워업
   puTimer+=dt;
-  if(puTimer>=puNext){ puTimer=0; spawnPU(); puNext=9+Math.random()*9; }
+  if(puTimer>=puNext){puTimer=0;spawnPU();puNext=10+Math.random()*10;}
   powerups=powerups.filter(p=>{
     p.x-=vx;
-    if(p.x+40<0) return false;
-    const ps=W*0.042;
-    if(overlap(px,py,pw,ph, p.x,p.y,ps,ps)){
-      if(!shield){ shield=true; document.getElementById('shieldHUD').style.display='block'; spawnPtc(p.x,p.y,'#00bfff',10); gauge=Math.min(gauge+3,99.5); }
-      return false;
+    if(p.el) p.el.style.left=p.x+'px';
+    if(p.x+p.w<0){p.el&&p.el.remove();return false;}
+    if(overlap(px,py,pw,ph,p.x,p.y,p.w,p.h)){
+      if(p.type==='energy'){ gauge=Math.min(gauge+35,99.5); spawnPtc(p.x+p.w/2,p.y+p.h/2,'#00f5ff',14); }
+      else if(p.type==='shield'&&!shield){ shield=true; document.getElementById('shieldHUD').style.display='block'; spawnPtc(p.x+p.w/2,p.y+p.h/2,'#00bfff',10); }
+      p.el&&p.el.remove();return false;
     }
     return true;
   });
 
-  // 파티클
-  particles=particles.filter(p=>{
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life-=p.decay; return p.life>0;
-  });
-
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;p.life-=p.decay;return p.life>0;});
   if(shieldFlash>0) shieldFlash--;
   if(shake>0) shake--;
 
-  // HUD
   document.getElementById('distD').textContent=Math.floor(score);
   document.getElementById('bestD').textContent=Math.floor(best);
   document.getElementById('gaugeFill').style.width=Math.min(gauge,100)+'%';
+
+  // 플레이어 SVG 위치 업데이트
+  updatePlayerSVG();
 }
 
-// ═══════════════════════════════════════
-//  배경 그리기 — 3구간
-// ═══════════════════════════════════════
-function drawBg() {
-  // 하늘 그라디언트
+// ─── 배경 그리기 ───
+function drawBg(){
   const sky=ctx.createLinearGradient(0,0,0,GY);
-  if(isAwake){
-    sky.addColorStop(0,'#100020'); sky.addColorStop(1,'#2d0040');
-  } else {
-    // 아침 칙칙한 하늘
-    sky.addColorStop(0,'#8ea8c3'); sky.addColorStop(1,'#c2d4e0');
-  }
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,GY);
+  if(isAwake){sky.addColorStop(0,'#0a0018');sky.addColorStop(1,'#1e0035');}
+  else{sky.addColorStop(0,'#6888aa');sky.addColorStop(0.6,'#a0bcd4');sky.addColorStop(1,'#c4d8e8');}
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,GY);
 
-  // 태양 (평범한 아침 — 가기 싫은 아침)
+  ctx.save();
   if(!isAwake){
-    ctx.save();
-    ctx.fillStyle='rgba(255,200,80,0.55)';
-    ctx.beginPath(); ctx.arc(W*0.88, H*0.13, H*0.055, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
+    const sg=ctx.createRadialGradient(W*0.84,H*0.12,0,W*0.84,H*0.12,H*0.10);
+    sg.addColorStop(0,'rgba(255,210,100,0.9)');sg.addColorStop(0.5,'rgba(255,180,60,0.35)');sg.addColorStop(1,'rgba(255,180,60,0)');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(W*0.84,H*0.12,H*0.10,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.fillStyle='rgba(200,0,255,0.65)';ctx.beginPath();ctx.arc(W*0.84,H*0.10,H*0.05,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(120,0,200,0.35)';ctx.beginPath();ctx.arc(W*0.84,H*0.10,H*0.09,0,Math.PI*2);ctx.fill();
   }
+  ctx.restore();
 
-  // 구름
-  ctx.fillStyle=isAwake?'rgba(120,0,180,0.35)':'rgba(255,255,255,0.75)';
   clouds.forEach(c=>{
-    const r=W*0.045*c.s;
+    const r=W*0.048*c.s;
+    ctx.fillStyle=isAwake?`rgba(80,0,120,0.4)`:`rgba(255,255,255,${0.55+c.s*0.18})`;
     ctx.beginPath();
-    ctx.ellipse(c.x,c.y,r,r*0.45,0,0,Math.PI*2);
-    ctx.ellipse(c.x+r*0.65,c.y-r*0.12,r*0.65,r*0.38,0,0,Math.PI*2);
-    ctx.ellipse(c.x-r*0.55,c.y+r*0.08,r*0.5,r*0.3,0,0,Math.PI*2);
+    ctx.ellipse(c.x,c.y,r,r*0.42,0,0,Math.PI*2);
+    ctx.ellipse(c.x+r*0.72,c.y-r*0.10,r*0.66,r*0.36,0,0,Math.PI*2);
+    ctx.ellipse(c.x-r*0.58,c.y+r*0.06,r*0.50,r*0.28,0,0,Math.PI*2);
+    ctx.ellipse(c.x+r*1.30,c.y+r*0.08,r*0.40,r*0.24,0,0,Math.PI*2);
     ctx.fill();
   });
 
-  // ── 건물/배경 오브젝트 ──
-  const scroll=(bgScroll*0.4);
-  bgObjects.forEach(b=>{
-    const bx=((b.x+scroll)%(W*3)+W*3)%(W*3)-W*0.15;
-    if(bx>W+b.w || bx+b.w<-10) return;
-    const by=GY-b.h;
+  if(!isAwake){
+    ctx.fillStyle='rgba(120,142,165,0.32)';
+    ctx.beginPath();ctx.moveTo(0,GY*0.74);
+    for(let x=0;x<=W;x+=W*0.055){
+      const h=GY*0.74-Math.sin((x*0.003+bgScroll*0.00012))*GY*0.10-Math.sin((x*0.007+bgScroll*0.00018))*GY*0.055;
+      ctx.lineTo(x,h);
+    }
+    ctx.lineTo(W,GY*0.74);ctx.lineTo(0,GY*0.74);ctx.closePath();ctx.fill();
 
+    ctx.fillStyle='rgba(95,115,135,0.48)';
+    ctx.beginPath();ctx.moveTo(0,GY*0.84);
+    for(let x=0;x<=W;x+=W*0.04){
+      const h=GY*0.84-Math.sin((x*0.005+bgScroll*0.00028))*GY*0.08-Math.sin((x*0.011+bgScroll*0.00038))*GY*0.038;
+      ctx.lineTo(x,h);
+    }
+    ctx.lineTo(W,GY*0.84);ctx.lineTo(0,GY*0.84);ctx.closePath();ctx.fill();
+  }
+
+  const scroll=bgScroll*0.42;
+  bgObjects.forEach(b=>{
+    const bx=((b.x+scroll)%(W*3.5)+W*3.5)%(W*3.5)-W*0.2;
+    if(bx>W+b.w||bx+b.w<-20) return;
+    const by=GY-b.h;
+    ctx.save();
     if(b.seg===0){
-      // 골목 — 낡은 빌라, 회색/베이지
-      const shade=isAwake?'#1e0030':'#8a8a8a';
-      ctx.fillStyle=shade; ctx.fillRect(bx,by,b.w,b.h);
-      // 빌라 라인
-      ctx.fillStyle=isAwake?'#2a0040':'#787878';
-      ctx.fillRect(bx, by+b.h*0.33, b.w, 3);
-      ctx.fillRect(bx, by+b.h*0.66, b.w, 3);
-      // 창문
-      const wc=isAwake?'rgba(180,80,255,0.3)':'rgba(200,220,255,0.5)';
-      ctx.fillStyle=wc;
-      const ww=b.w*0.22, wh=b.h*0.12, wgx=b.w*0.32, wgy=b.h*0.2;
-      for(let wy=by+wgy; wy<GY-wgy*0.5; wy+=wgy)
-        for(let wx=bx+b.w*0.12; wx<bx+b.w-ww; wx+=wgx)
-          ctx.fillRect(wx,wy,ww,wh);
-      // 담벼락 낙서 (골목 느낌)
-      if(b.h<H*0.25){
-        ctx.save();
-        ctx.fillStyle=isAwake?'rgba(200,0,255,0.25)':'rgba(80,80,80,0.5)';
-        ctx.font=`bold ${H*0.02}px sans-serif`;
-        ctx.fillText('⚡',bx+b.w*0.2,by+b.h*0.8);
-        ctx.restore();
+      ctx.fillStyle=isAwake?'#1c002e':'#787888';ctx.fillRect(bx,by,b.w,b.h);
+      ctx.fillStyle=isAwake?'#120020':'#606072';
+      ctx.fillRect(bx,by+b.h*0.33,b.w,2.5);ctx.fillRect(bx,by+b.h*0.66,b.w,2.5);
+      ctx.fillStyle=isAwake?'#0a0016':'#525265';
+      ctx.beginPath();ctx.moveTo(bx-b.w*0.04,by);ctx.lineTo(bx+b.w*0.5,by-b.h*0.13);ctx.lineTo(bx+b.w*1.04,by);ctx.closePath();ctx.fill();
+      const wc=isAwake?'rgba(150,50,255,0.38)':'rgba(210,228,255,0.62)';
+      const ww=b.w*0.20,wh=b.h*0.11,wgx=b.w*0.30,wgy=b.h*0.19;
+      for(let wy=by+b.h*0.06;wy<GY-wh*1.5;wy+=wgy){
+        for(let wx=bx+b.w*0.12;wx<bx+b.w-ww*1.2;wx+=wgx){
+          ctx.fillStyle=wc;ctx.fillRect(wx,wy,ww,wh);
+          ctx.strokeStyle=isAwake?'rgba(180,80,255,0.45)':'rgba(155,168,188,0.55)';
+          ctx.lineWidth=1;ctx.strokeRect(wx,wy,ww,wh);
+          if((wx+wy)%41<19&&!isAwake){ctx.fillStyle='rgba(255,220,120,0.42)';ctx.fillRect(wx+1,wy+1,ww-2,wh-2);}
+        }
       }
     } else if(b.seg===1){
-      // 상가 — PC방 간판 화려
-      ctx.fillStyle=isAwake?'#200035':'#6a6a7a'; ctx.fillRect(bx,by,b.w,b.h);
-      // PC방 간판 (밝게)
+      ctx.fillStyle=isAwake?'#180025':'#585868';ctx.fillRect(bx,by,b.w,b.h);
       const signH=b.h*0.22;
-      const neonC=isAwake?'rgba(255,50,255,0.9)':'rgba(0,220,255,0.9)';
-      ctx.fillStyle=neonC;
-      ctx.fillRect(bx+b.w*0.05,by+b.h*0.05,b.w*0.9,signH);
-      ctx.save();
-      ctx.fillStyle='#000'; ctx.font=`bold ${signH*0.55}px sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText('PC방',bx+b.w/2,by+b.h*0.05+signH/2);
-      ctx.restore();
-      // 창문
-      ctx.fillStyle=isAwake?'rgba(200,100,255,0.3)':'rgba(255,220,100,0.6)';
-      const ww2=b.w*0.22, wh2=b.h*0.14;
-      for(let wy=by+b.h*0.35; wy<GY-b.h*0.1; wy+=b.h*0.22)
-        for(let wx=bx+b.w*0.1; wx<bx+b.w-ww2; wx+=b.w*0.32)
-          ctx.fillRect(wx,wy,ww2,wh2);
-    } else if(b.seg===2){
-      // 학교 앞 — 교문 느낌, 칙칙
-      ctx.fillStyle=isAwake?'#1a0025':'#5a5a6a'; ctx.fillRect(bx,by,b.w,b.h);
-      // 철창 느낌 세로선
-      ctx.fillStyle=isAwake?'rgba(150,0,200,0.5)':'rgba(80,80,100,0.8)';
-      const barW=b.w*0.06, gap=b.w*0.14;
-      for(let gx=bx+gap; gx<bx+b.w-barW; gx+=gap)
-        ctx.fillRect(gx,by,barW,b.h);
-      // 교문 간판
-      ctx.save();
-      ctx.fillStyle=isAwake?'rgba(255,0,100,0.8)':'rgba(60,60,80,0.9)';
-      ctx.fillRect(bx,by,b.w,b.h*0.18);
-      ctx.fillStyle=isAwake?'#ff88aa':'#ddd';
-      ctx.font=`bold ${b.h*0.12}px sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText('🏫',bx+b.w/2,by+b.h*0.09);
-      ctx.restore();
+      const isPC=(Math.floor(b.x/(W*0.4))%2===0);
+      ctx.fillStyle=isPC?(isAwake?'rgba(255,0,255,0.85)':'rgba(0,180,255,0.9)'):(isAwake?'rgba(255,50,0,0.85)':'rgba(255,100,0,0.88)');
+      ctx.fillRect(bx+b.w*0.04,by+b.h*0.04,b.w*0.92,signH);
+      ctx.strokeStyle=isPC?'#00ffff':'#ffaa00';ctx.lineWidth=2;ctx.shadowColor=isPC?'#00ffff':'#ffaa00';ctx.shadowBlur=10;
+      ctx.strokeRect(bx+b.w*0.04,by+b.h*0.04,b.w*0.92,signH);ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';ctx.font=`bold ${signH*0.48}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(isPC?'PC방':'분식',bx+b.w*0.5,by+b.h*0.04+signH*0.5);
+      const ww2=b.w*0.20,wh2=b.h*0.12;
+      for(let wy=by+b.h*0.34;wy<GY-b.h*0.08;wy+=b.h*0.20)
+        for(let wx=bx+b.w*0.08;wx<bx+b.w-ww2*1.2;wx+=b.w*0.30){
+          ctx.fillStyle=isAwake?'rgba(200,100,255,0.28)':'rgba(255,218,100,0.52)';ctx.fillRect(wx,wy,ww2,wh2);
+        }
+    } else {
+      ctx.fillStyle=isAwake?'#160022':'#505060';ctx.fillRect(bx,by,b.w,b.h);
+      const barW=Math.max(3,b.w*0.052),gap=b.w*0.12;
+      for(let gx2=bx+gap*0.5;gx2<bx+b.w-barW;gx2+=gap){
+        ctx.fillStyle=isAwake?'rgba(155,0,215,0.7)':'rgba(68,68,88,0.9)';ctx.fillRect(gx2,by,barW,b.h);
+        ctx.fillStyle=isAwake?'rgba(175,0,250,0.38)':'rgba(88,88,108,0.65)';
+        ctx.fillRect(bx,by+b.h*0.3,b.w,Math.max(2,b.h*0.022));
+        ctx.fillRect(bx,by+b.h*0.6,b.w,Math.max(1.5,b.h*0.018));
+      }
+      ctx.fillStyle=isAwake?'rgba(215,0,95,0.9)':'rgba(48,48,68,0.95)';ctx.fillRect(bx,by,b.w,b.h*0.20);
+      ctx.fillStyle=isAwake?'#ff99cc':'#c8c8d5';ctx.font=`bold ${b.h*0.12}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('🏫 ○○중학교',bx+b.w*0.5,by+b.h*0.10);
     }
+    ctx.restore();
   });
 
   // 땅
-  ctx.fillStyle=isAwake?'#1a0030':'#606060';
-  ctx.fillRect(0,GY,W,H-GY);
-  // 인도 라인
-  ctx.fillStyle=isAwake?'#3a0050':'#808080';
-  ctx.fillRect(0,GY,W,H*0.015);
-  // 타일 선
-  ctx.strokeStyle=isAwake?'rgba(180,0,255,0.3)':'rgba(150,150,150,0.5)';
-  ctx.lineWidth=1.5; ctx.setLineDash([W*0.035,W*0.025]);
-  const dashOff=bgScroll%((W*0.035+W*0.025));
-  ctx.beginPath(); ctx.moveTo(dashOff,GY+H*0.05); ctx.lineTo(W,GY+H*0.05);
-  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=isAwake?'#18002e':'#646470';ctx.fillRect(0,GY,W,H-GY);
+  ctx.fillStyle=isAwake?'#2c0048':'#868696';ctx.fillRect(0,GY,W,H*0.018);
+  const tileW=W*0.065,tileH=H*0.036;
+  const tileOff=((bgScroll*0.8)%(tileW+4));
+  ctx.fillStyle=isAwake?'rgba(100,0,180,0.22)':'rgba(175,175,192,0.48)';
+  for(let tx=-tileW+tileOff;tx<W+tileW;tx+=tileW+4) ctx.fillRect(tx,GY+H*0.022,tileW,tileH);
+  ctx.fillStyle=isAwake?'rgba(120,0,200,0.28)':'rgba(138,138,158,0.58)';
+  ctx.fillRect(0,GY+H*0.022+tileH,W,2);
 }
 
-// ═══════════════════════════════════════
-//  캐릭터 그리기 — 완전 재설계 v0.2.2
-//  머리:몸 = 45:55 만화 비율
-//  눈: 흰자+눈동자+하이라이트 3단
-//  표정: 인상팍, 볼터치, 땀
-// ═══════════════════════════════════════
-function drawPlayer() {
-  const pw=PW(), ph=PH();
-  const cx=px+pw/2;
-  const t=elapsed;
-  ctx.save();
-
-  // ── 각성 오라 ──
-  if(isAwake){
-    const og=ctx.createRadialGradient(cx,py+ph*0.5,pw*0.1,cx,py+ph*0.5,pw*2.2);
-    og.addColorStop(0,'rgba(200,0,255,0.6)');
-    og.addColorStop(0.5,'rgba(255,0,80,0.3)');
-    og.addColorStop(1,'rgba(180,0,255,0)');
-    ctx.fillStyle=og;
-    ctx.beginPath(); ctx.ellipse(cx,py+ph*0.5,pw*2.2,pw*2.2,0,0,Math.PI*2); ctx.fill();
-  }
-
-  // ── 보호막 ──
-  if(shield){
-    ctx.save();
-    ctx.strokeStyle='#00bfff'; ctx.lineWidth=3;
-    ctx.shadowColor='#00bfff'; ctx.shadowBlur=18;
-    ctx.globalAlpha=(shieldFlash%4<2)?0.4:0.9;
-    ctx.beginPath(); ctx.ellipse(cx,py+ph*0.5,pw*1.0,ph*0.58,0,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-  }
-
-  // ── 달리기 애니 타이밍 ──
-  const run=Math.sin(t*14);
-  const run2=Math.sin(t*14+Math.PI);
-  const bob=Math.abs(Math.sin(t*14))*ph*0.012; // 몸통 상하 바운스
-
-  // ══ 가방 (등 뒤, 먼저 그려야 캐릭터 위에 안 겹침) ══
-  const bagY=py+ph*0.38+bob;
-  const bagBounce=Math.sin(t*14+0.5)*ph*0.018;
-  ctx.save();
-  // 가방 본체
-  ctx.fillStyle=isAwake?'#5a0090':'#5d4037';
-  roundRect(ctx, px+pw*0.72, bagY+bagBounce, pw*0.38, ph*0.30, pw*0.06);
-  ctx.fill();
-  // 가방 포켓
-  ctx.fillStyle=isAwake?'#7a00bb':'#795548';
-  roundRect(ctx, px+pw*0.75, bagY+ph*0.08+bagBounce, pw*0.32, ph*0.14, pw*0.04);
-  ctx.fill();
-  // 가방 끈 (어깨)
-  ctx.strokeStyle=isAwake?'#7a00bb':'#795548';
-  ctx.lineWidth=pw*0.1; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(px+pw*0.76, bagY+bagBounce);
-  ctx.quadraticCurveTo(px+pw*0.60, py+ph*0.32+bob, px+pw*0.65, py+ph*0.38+bob);
-  ctx.stroke();
-  ctx.restore();
-
-  // ══ 다리 ══
-  const legW=pw*0.30, legH=ph*0.24;
-  const legY=py+ph*0.72+bob;
-  const shoe=isAwake?'#9900cc':'#cccccc';
-  const pant=isAwake?'#2a0050':'#1a1a3a';
-
-  // 왼 다리
-  ctx.save();
-  ctx.fillStyle=pant;
-  roundRect(ctx, px+pw*0.12, legY+run*ph*0.07, legW, legH+Math.abs(run)*ph*0.04, pw*0.06);
-  ctx.fill();
-  // 왼 신발 (둥글게)
-  ctx.fillStyle=shoe;
-  ctx.beginPath();
-  ctx.ellipse(px+pw*0.12+legW*0.4, legY+legH+run*ph*0.07+ph*0.03, legW*0.55, ph*0.055, 0.1, 0, Math.PI*2);
-  ctx.fill();
-  // 신발 흰 줄
-  ctx.fillStyle='rgba(255,255,255,0.4)';
-  ctx.fillRect(px+pw*0.13, legY+legH+run*ph*0.07+ph*0.01, legW*0.35, ph*0.018);
-  ctx.restore();
-
-  // 오른 다리
-  ctx.save();
-  ctx.fillStyle=pant;
-  roundRect(ctx, px+pw*0.52, legY+run2*ph*0.07, legW, legH+Math.abs(run2)*ph*0.04, pw*0.06);
-  ctx.fill();
-  ctx.fillStyle=shoe;
-  ctx.beginPath();
-  ctx.ellipse(px+pw*0.52+legW*0.4, legY+legH+run2*ph*0.07+ph*0.03, legW*0.55, ph*0.055, 0.1, 0, Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,0.4)';
-  ctx.fillRect(px+pw*0.54, legY+legH+run2*ph*0.07+ph*0.01, legW*0.35, ph*0.018);
-  ctx.restore();
-
-  // ══ 몸통 — 교복 ══
-  const bodyY=py+ph*0.40+bob;
-  const bodyH=ph*0.33;
-
-  // 와이셔츠 (흰색 중간)
-  ctx.fillStyle=isAwake?'#1a0035':'#eeeef5';
-  roundRect(ctx, px+pw*0.22, bodyY, pw*0.56, bodyH, pw*0.04);
-  ctx.fill();
-
-  // 교복 재킷 왼쪽
-  ctx.fillStyle=isAwake?'#0d0025':'#0d1b5e';
-  roundRect(ctx, px+pw*0.08, bodyY, pw*0.22, bodyH, pw*0.04);
-  ctx.fill();
-  // 교복 재킷 오른쪽
-  roundRect(ctx, px+pw*0.70, bodyY, pw*0.22, bodyH, pw*0.04);
-  ctx.fill();
-  // 재킷 하단 연결
-  ctx.fillRect(px+pw*0.08, bodyY+bodyH*0.6, pw*0.84, bodyH*0.4);
-
-  // 넥타이 (날림)
-  const tieX=Math.sin(t*11)*pw*0.05;
-  ctx.fillStyle='#e53935';
-  ctx.beginPath();
-  ctx.moveTo(cx-pw*0.05+tieX, bodyY+bodyH*0.05);
-  ctx.lineTo(cx+pw*0.05+tieX, bodyY+bodyH*0.05);
-  ctx.lineTo(cx+pw*0.03+tieX*1.4, bodyY+bodyH*0.75);
-  ctx.lineTo(cx-pw*0.03+tieX*1.4, bodyY+bodyH*0.75);
-  ctx.closePath(); ctx.fill();
-  // 넥타이 매듭
-  ctx.fillStyle='#c62828';
-  ctx.beginPath();
-  ctx.ellipse(cx+tieX*0.3, bodyY+bodyH*0.1, pw*0.045, ph*0.022, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // 교복 단추
-  ctx.fillStyle='rgba(255,255,255,0.6)';
-  for(let i=0;i<2;i++){
-    ctx.beginPath();
-    ctx.arc(cx+pw*0.17, bodyY+bodyH*(0.3+i*0.3), pw*0.03, 0, Math.PI*2);
-    ctx.fill();
-  }
-
-  // ══ 팔 ══
-  const armL=pw*0.20, armH=ph*0.26;
-  const armC=isAwake?'#0d0025':'#0d1b5e';
-
-  // 왼팔 (앞으로 뻗음)
-  ctx.save();
-  ctx.fillStyle=armC;
-  ctx.save();
-  ctx.translate(px-pw*0.02, bodyY+armH*0.0);
-  ctx.rotate(run*0.18);
-  roundRect(ctx, 0, 0, armL, armH, pw*0.06);
-  ctx.fill();
-  // 손
-  ctx.fillStyle='#f5c5a0';
-  ctx.beginPath(); ctx.ellipse(armL*0.5, armH+ph*0.02, armL*0.38, ph*0.04, 0, 0, Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  // 오른팔
-  ctx.save();
-  ctx.translate(px+pw*0.80, bodyY);
-  ctx.rotate(run2*0.18);
-  ctx.fillStyle=armC;
-  roundRect(ctx, 0, 0, armL, armH, pw*0.06);
-  ctx.fill();
-  ctx.fillStyle='#f5c5a0';
-  ctx.beginPath(); ctx.ellipse(armL*0.5, armH+ph*0.02, armL*0.38, ph*0.04, 0, 0, Math.PI*2); ctx.fill();
-  ctx.restore();
-  ctx.restore();
-
-  // ══ 머리 ══
-  // 비율: 머리 = ph의 42%, 몸 = 58%
-  const headR=pw*0.52;    // 머리 반지름 (가로)
-  const headRY=ph*0.21;   // 머리 반지름 (세로)
-  const headCX=cx;
-  const headCY=py+ph*0.21+bob;
-
-  // 목
-  ctx.fillStyle='#f0b890';
-  ctx.fillRect(cx-pw*0.12, headCY+headRY*0.78, pw*0.24, ph*0.06);
-
-  // ── 머리카락 (뒤쪽, 헝클어짐) ──
-  ctx.fillStyle=isAwake?'#0a0010':'#1a1008';
-  // 메인 머리 덩어리
-  ctx.beginPath();
-  ctx.ellipse(headCX, headCY-headRY*0.1, headR*1.08, headRY*1.08, 0, 0, Math.PI*2);
-  ctx.fill();
-  // 앞머리 튀어나온 것들
-  ctx.beginPath(); ctx.ellipse(headCX-headR*0.55, headCY-headRY*0.75, headR*0.32, headRY*0.42, -0.5, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headCX-headR*0.18, headCY-headRY*1.05, headR*0.28, headRY*0.38, -0.1, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headCX+headR*0.22, headCY-headRY*0.95, headR*0.30, headRY*0.35, 0.3, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headCX+headR*0.58, headCY-headRY*0.65, headR*0.26, headRY*0.36, 0.6, 0, Math.PI*2); ctx.fill();
-
-  // ── 얼굴 (피부색) ──
-  const skinC=isAwake?'#c88060':'#f5c5a0';
-  ctx.fillStyle=skinC;
-  ctx.beginPath();
-  ctx.ellipse(headCX, headCY, headR, headRY, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // 얼굴 윤곽선
-  ctx.strokeStyle='rgba(180,100,60,0.25)';
-  ctx.lineWidth=pw*0.025;
-  ctx.beginPath();
-  ctx.ellipse(headCX, headCY, headR, headRY, 0, 0, Math.PI*2);
-  ctx.stroke();
-
-  // ── 앞머리 (얼굴 위에 덮임) ──
-  ctx.fillStyle=isAwake?'#0a0010':'#1a1008';
-  ctx.beginPath();
-  ctx.ellipse(headCX-headR*0.3, headCY-headRY*0.55, headR*0.38, headRY*0.38, -0.2, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(headCX+headR*0.1, headCY-headRY*0.72, headR*0.32, headRY*0.32, 0.15, 0, Math.PI*2); ctx.fill();
-  // 앞머리 끝 삐친 것
-  ctx.beginPath();
-  ctx.moveTo(headCX-headR*0.55, headCY-headRY*0.1);
-  ctx.quadraticCurveTo(headCX-headR*0.72, headCY+headRY*0.05, headCX-headR*0.62, headCY+headRY*0.25);
-  ctx.lineWidth=pw*0.12; ctx.strokeStyle=isAwake?'#0a0010':'#1a1008'; ctx.stroke();
-
-  // ── 눈썹 (팍 내려간, 두껍게) ──
-  ctx.lineCap='round';
-  ctx.lineWidth=ph*0.028;
-  ctx.strokeStyle=isAwake?'#000':'#1a1008';
-
-  // 왼 눈썹 (인상 쓰며 내려감, 안쪽이 낮음)
-  ctx.beginPath();
-  ctx.moveTo(headCX-headR*0.58, headCY-headRY*0.28);
-  ctx.quadraticCurveTo(headCX-headR*0.38, headCY-headRY*0.18, headCX-headR*0.14, headCY-headRY*0.24);
-  ctx.stroke();
-
-  // 오른 눈썹
-  ctx.beginPath();
-  ctx.moveTo(headCX+headR*0.14, headCY-headRY*0.24);
-  ctx.quadraticCurveTo(headCX+headR*0.38, headCY-headRY*0.18, headCX+headR*0.58, headCY-headRY*0.28);
-  ctx.stroke();
-
-  // ── 눈 (흰자 + 눈동자 + 하이라이트) ──
-  const eyeY=headCY-headRY*0.04;
-  const eyeRX=headR*0.22, eyeRY=headRY*0.26;
-  const leftEyeX=headCX-headR*0.34;
-  const rightEyeX=headCX+headR*0.34;
-
-  if(isAwake){
-    // 각성 눈 — 붉게 타오름
-    for(const ex of [leftEyeX, rightEyeX]){
-      ctx.save();
-      ctx.shadowColor='#ff2d55'; ctx.shadowBlur=pw*0.5;
-      // 흰자 (빨갛게)
-      ctx.fillStyle='#ff6688';
-      ctx.beginPath(); ctx.ellipse(ex, eyeY, eyeRX, eyeRY, 0, 0, Math.PI*2); ctx.fill();
-      // 눈동자 (붉은 불꽃)
-      ctx.fillStyle='#ff0033';
-      ctx.beginPath(); ctx.ellipse(ex, eyeY, eyeRX*0.6, eyeRY*0.75, 0, 0, Math.PI*2); ctx.fill();
-      // 중심
-      ctx.fillStyle='#800000';
-      ctx.beginPath(); ctx.ellipse(ex, eyeY, eyeRX*0.28, eyeRY*0.38, 0, 0, Math.PI*2); ctx.fill();
-      // 하이라이트
-      ctx.shadowBlur=0;
-      ctx.fillStyle='rgba(255,200,200,0.9)';
-      ctx.beginPath(); ctx.ellipse(ex-eyeRX*0.22, eyeY-eyeRY*0.28, eyeRX*0.16, eyeRY*0.18, 0, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-  } else {
-    // 일반 눈 — 흰자 + 다크 눈동자 + 빛
-    for(const ex of [leftEyeX, rightEyeX]){
-      // 흰자
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.ellipse(ex, eyeY, eyeRX, eyeRY, 0, 0, Math.PI*2); ctx.fill();
-      // 눈테 (위쪽 속눈썹 효과)
-      ctx.strokeStyle='#1a1008'; ctx.lineWidth=pw*0.025;
-      ctx.beginPath(); ctx.ellipse(ex, eyeY, eyeRX, eyeRY, 0, Math.PI, Math.PI*2); ctx.stroke();
-      // 눈동자
-      ctx.fillStyle='#2c1810';
-      ctx.beginPath(); ctx.ellipse(ex, eyeY+eyeRY*0.05, eyeRX*0.6, eyeRY*0.72, 0, 0, Math.PI*2); ctx.fill();
-      // 눈 색 (다크브라운)
-      ctx.fillStyle='#5c3010';
-      ctx.beginPath(); ctx.ellipse(ex, eyeY+eyeRY*0.05, eyeRX*0.38, eyeRY*0.48, 0, 0, Math.PI*2); ctx.fill();
-      // 하이라이트 (크게, 생동감)
-      ctx.fillStyle='rgba(255,255,255,0.95)';
-      ctx.beginPath(); ctx.ellipse(ex-eyeRX*0.20, eyeY-eyeRY*0.20, eyeRX*0.20, eyeRY*0.22, 0, 0, Math.PI*2); ctx.fill();
-      // 보조 하이라이트 (작게)
-      ctx.fillStyle='rgba(255,255,255,0.6)';
-      ctx.beginPath(); ctx.ellipse(ex+eyeRX*0.18, eyeY+eyeRY*0.10, eyeRX*0.10, eyeRY*0.10, 0, 0, Math.PI*2); ctx.fill();
-      // 위쪽 속눈썹 선
-      ctx.strokeStyle='#1a1008'; ctx.lineWidth=pw*0.04; ctx.lineCap='round';
-      ctx.beginPath();
-      ctx.moveTo(ex-eyeRX, eyeY-eyeRY*0.3);
-      ctx.quadraticCurveTo(ex, eyeY-eyeRY*1.05, ex+eyeRX, eyeY-eyeRY*0.3);
-      ctx.stroke();
-    }
-  }
-
-  // ── 코 (작은 삼각형, 귀여운) ──
-  ctx.fillStyle='rgba(180,100,60,0.35)';
-  ctx.beginPath();
-  ctx.moveTo(headCX, eyeY+headRY*0.22);
-  ctx.lineTo(headCX-headR*0.07, eyeY+headRY*0.38);
-  ctx.lineTo(headCX+headR*0.07, eyeY+headRY*0.38);
-  ctx.closePath(); ctx.fill();
-
-  // ── 입 (억울, 입꼬리 팍 내려감) ──
-  ctx.strokeStyle='#8b4513'; ctx.lineWidth=ph*0.022; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(headCX-headR*0.25, eyeY+headRY*0.60);
-  ctx.quadraticCurveTo(headCX, eyeY+headRY*0.52, headCX+headR*0.25, eyeY+headRY*0.60);
-  ctx.stroke();
-  // 입꼬리 내려간 선
-  ctx.beginPath();
-  ctx.moveTo(headCX-headR*0.25, eyeY+headRY*0.60);
-  ctx.lineTo(headCX-headR*0.32, eyeY+headRY*0.70);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(headCX+headR*0.25, eyeY+headRY*0.60);
-  ctx.lineTo(headCX+headR*0.32, eyeY+headRY*0.70);
-  ctx.stroke();
-
-  // ── 볼터치 (귀여움) ──
-  ctx.fillStyle='rgba(255,140,120,0.28)';
-  ctx.beginPath(); ctx.ellipse(headCX-headR*0.60, eyeY+headRY*0.30, headR*0.22, headRY*0.14, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(headCX+headR*0.60, eyeY+headRY*0.30, headR*0.22, headRY*0.14, 0, 0, Math.PI*2); ctx.fill();
-
-  // ── 땀방울 (지각 위기) ──
-  ctx.fillStyle='rgba(100,180,255,0.8)';
-  ctx.beginPath();
-  ctx.moveTo(headCX+headR*0.72, headCY-headRY*0.5);
-  ctx.quadraticCurveTo(headCX+headR*0.80, headCY-headRY*0.25, headCX+headR*0.68, headCY-headRY*0.15);
-  ctx.quadraticCurveTo(headCX+headR*0.58, headCY-headRY*0.0, headCX+headR*0.60, headCY-headRY*0.18);
-  ctx.quadraticCurveTo(headCX+headR*0.62, headCY-headRY*0.35, headCX+headR*0.72, headCY-headRY*0.5);
-  ctx.fill();
-
-  // ── 각성 마법진 ──
-  if(isAwake){
-    const mr=pw*1.5+Math.sin(t*8)*pw*0.18;
-    for(let i=0;i<3;i++){
-      ctx.save();
-      ctx.strokeStyle=`rgba(220,0,255,${0.35+Math.sin(t*5+i)*0.15})`;
-      ctx.lineWidth=1.8; ctx.shadowColor='#ff2d55'; ctx.shadowBlur=10;
-      ctx.translate(cx,GY); ctx.rotate(t*(1.5+i*0.5)+i*Math.PI/3);
-      ctx.beginPath();
-      for(let j=0;j<6;j++){
-        const a=(j/6)*Math.PI*2;
-        const rx=Math.cos(a)*(mr-i*pw*0.28), ry=Math.sin(a)*(mr-i*pw*0.28)*0.2;
-        j===0?ctx.moveTo(rx,ry):ctx.lineTo(rx,ry);
-      }
-      ctx.closePath(); ctx.stroke(); ctx.restore();
-    }
-  }
-
-  ctx.restore();
-}
-
-// ── 유틸: 둥근 사각형 ──
-function roundRect(ctx, x, y, w, h, r) {
-  r = Math.min(r, w/2, h/2);
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.lineTo(x+w-r, y);
-  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-  ctx.lineTo(x+w, y+h-r);
-  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-  ctx.lineTo(x+r, y+h);
-  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-  ctx.lineTo(x, y+r);
-  ctx.quadraticCurveTo(x, y, x+r, y);
-  ctx.closePath();
-}
-
-// ═══════════════════════════════════════
-//  장애물 / 파워업 / 파티클 그리기
-// ═══════════════════════════════════════
-function drawObs() {
-  obstacles.forEach(o=>{
-    const oy=GY-o.h;
-    ctx.save();
-    if(isAwake){ctx.shadowColor='#ff2d55'; ctx.shadowBlur=12;}
-    ctx.font=`${o.h*0.92}px serif`; ctx.textAlign='center';
-    ctx.fillText(o.e, o.x+o.w/2, oy+o.h*0.9);
-    ctx.restore();
-  });
-}
-
-function drawPU() {
-  const ps=W*0.042;
-  powerups.forEach(p=>{
-    const bob=Math.sin(elapsed*4.5)*H*0.013;
-    ctx.save();
-    ctx.font=`${ps}px serif`; ctx.textAlign='center';
-    ctx.shadowColor='#00bfff'; ctx.shadowBlur=14;
-    ctx.fillText(p.e, p.x+ps/2, p.y+bob);
-    ctx.restore();
-  });
-}
-
-function drawPtc() {
+function drawPtc(){
   particles.forEach(p=>{
-    ctx.save(); ctx.globalAlpha=p.life;
-    ctx.fillStyle=p.col;
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
-    ctx.restore();
+    ctx.save();ctx.globalAlpha=p.life;ctx.fillStyle=p.col;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();ctx.restore();
   });
 }
 
-// ═══════════════════════════════════════
-//  메인 렌더
-// ═══════════════════════════════════════
-function render() {
+function render(){
   ctx.save();
-  if(shake>0) ctx.translate((Math.random()-0.5)*shake*0.45,(Math.random()-0.5)*shake*0.45);
+  if(shake>0) ctx.translate((Math.random()-0.5)*shake*0.4,(Math.random()-0.5)*shake*0.4);
   drawBg();
-  drawObs();
-  drawPU();
-  drawPlayer();
   drawPtc();
   ctx.restore();
 }
 
-// ═══════════════════════════════════════
-//  루프
-// ═══════════════════════════════════════
-function loop(ts) {
+function loop(ts){
   update(ts);
   render();
   requestAnimationFrame(loop);
